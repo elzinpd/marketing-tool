@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200" height="50" viewBox="0 0 200 50" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .text { font-family: Arial, sans-serif; font-size: 24px; font-weight: bold; }
+    .tech { fill: #0069c2; }
+    .arena { fill: #475d73; }
+  </style>
+  <text x="10" y="35" class="text tech">Tech</text>
+  <text x="70" y="35" class="text arena">Arena</text>
+</svg> 
