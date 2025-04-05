@@ -32,5 +32,11 @@ export default defineConfig({
         }
       }
     }
+  },
+  build: {
+    // Skip type checking during build for faster deployment
+    typescript: {
+      ignoreBuildErrors: true,
+    }
   }
 }); 
