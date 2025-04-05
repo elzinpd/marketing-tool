@@ -10,7 +10,8 @@ interface ErrorResponse {
 }
 
 export const useApi = () => {
-  const { token, logout } = useAuth();
+  const { user, logout } = useAuth();
+  const token = user?.token;
 
   const api = useMemo(() => {
     const instance = axios.create({

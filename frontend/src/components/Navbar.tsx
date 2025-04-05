@@ -125,7 +125,7 @@ const Navbar: React.FC = () => {
           </Typography>
         </Box>
 
-        {isAuthenticated && (
+        {isAuthenticated() && (
           <Box display="flex" alignItems="center">
             <Button 
               color="inherit" 

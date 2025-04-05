@@ -89,7 +89,7 @@ const AppContent = () => {
 
   // Debug authentication state on each render
   console.log('App authentication state:', { 
-    isAuthenticated, 
+    isAuthenticated: isAuthenticated(), 
     isLoading, 
     hasLocalToken: !!localStorage.getItem('token') 
   });
@@ -105,13 +105,13 @@ const AppContent = () => {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: 'background.default' }}>
-      {isAuthenticated && <Navbar />}
+      {isAuthenticated() && <Navbar />}
       <Box component="main" sx={{ flexGrow: 1, bgcolor: 'background.default', p: 3 }}>
         <Routes>
           {/* Login route - redirect to dashboard if already logged in */}
           <Route 
             path="/login" 
-            element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />} 
+            element={isAuthenticated() ? <Navigate to="/dashboard" replace /> : <Login />} 
           />
           
           {/* Protected dashboard route */}
@@ -177,7 +177,7 @@ const AppContent = () => {
           {/* Default route redirects to dashboard if authenticated, otherwise to login */}
           <Route 
             path="/" 
-            element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />} 
+            element={isAuthenticated() ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />} 
           />
           
           {/* 404 route handling */}

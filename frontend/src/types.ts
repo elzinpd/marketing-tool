@@ -16,6 +16,8 @@ export interface Client {
   updated_at: string;
   linkedin_account_id?: string;
   status: string;
+  campaign_keywords?: string;
+  campaign_keywords_list?: string[];
 }
 
 export interface Campaign {

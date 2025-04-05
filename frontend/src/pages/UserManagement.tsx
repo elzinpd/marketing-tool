@@ -88,7 +88,7 @@ const UserManagement: React.FC = () => {
 
   // Redirect non-admin users to dashboard
   useEffect(() => {
-    if (!isLoading && isAuthenticated && user?.role !== 'admin') {
+    if (!isLoading && isAuthenticated() && user?.role !== 'admin') {
       navigate('/dashboard');
     }
   }, [isLoading, isAuthenticated, user, navigate]);
