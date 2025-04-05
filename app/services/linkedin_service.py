@@ -2,6 +2,12 @@ from typing import Optional, List, Dict, Any
 from app.core.config import settings
 import requests
 import logging
+import json
+from fastapi import HTTPException, status
+from sqlalchemy.orm import Session
+from app.db.models import User, Client, Campaign, CampaignMetric
+from app.core.auth import get_current_user
+import httpx
 
 logger = logging.getLogger(__name__)
 
@@ -11,6 +17,47 @@ class LinkedInService:
         self.client_secret = settings.LINKEDIN_CLIENT_SECRET
         self.base_url = "https://api.linkedin.com/v2"
         self.auth_url = "https://www.linkedin.com/oauth/v2"
+        self.access_token = settings.LINKEDIN_ACCESS_TOKEN
+
+    def _get_headers(self, access_token: str) -> Dict[str, str]:
+        """Get common headers for LinkedIn API requests"""
+        return {
+            "Authorization": f"Bearer {access_token}",
+            "X-Restli-Protocol-Version": "2.0.0",
+            "Content-Type": "application/json",
+            "cache-control": "no-cache",
+            "LinkedIn-Version": "202401"
+        }
+
+    def _handle_error_response(self, response: requests.Response) -> None:
+        """Handle error responses from LinkedIn API"""
+        try:
+            error_data = response.json()
+            logger.error(f"LinkedIn API Error: Status {response.status_code}")
+            logger.error(f"Response Headers: {json.dumps(dict(response.headers), indent=2)}")
+            logger.error(f"Response Body: {json.dumps(error_data, indent=2)}")
+        except Exception as e:
+            logger.error(f"Failed to parse error response: {str(e)}")
+            logger.error(f"Raw Response: {response.text}")
+        response.raise_for_status()
+
+    async def verify_token(self) -> bool:
+        """Verify if the access token is valid"""
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    "https://api.linkedin.com/v2/userinfo",
+                    headers=self._get_headers(self.access_token)
+                )
+                if response.status_code != 200:
+                    self._handle_error_response(response)
+                    return False
+                return True
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=f"Invalid or expired access token: {str(e)}"
+            )
 
     def get_auth_url(self, redirect_uri: str, state: Optional[str] = None) -> str:
         """Generate LinkedIn OAuth2 authorization URL"""
@@ -22,7 +69,7 @@ class LinkedInService:
             "response_type": "code",
             "client_id": self.client_id,
             "redirect_uri": redirect_uri,
-            "scope": "r_liteprofile r_emailaddress w_member_social"
+            "scope": "r_liteprofile r_emailaddress w_member_social ads_management"
         }
         if state:
             params["state"] = state
@@ -48,89 +95,65 @@ class LinkedInService:
             response.raise_for_status()
             return response.json()
         except Exception as e:
-            logger.error(f"Failed to exchange code for token: {str(e)}")
+            logger.error(f"Error exchanging code for token: {str(e)}")
             raise
 
-    def get_profile(self, access_token: str) -> Dict[str, Any]:
-        """Get user's LinkedIn profile"""
-        try:
-            headers = {
-                "Authorization": f"Bearer {access_token}",
-                "cache-control": "no-cache",
-                "X-Restli-Protocol-Version": "2.0.0"
-            }
-            
-            # Get basic profile info
-            profile_response = requests.get(
+    async def get_profile(self) -> Dict[str, Any]:
+        """Get LinkedIn profile information"""
+        if not await self.verify_token():
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid or expired access token"
+            )
+
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
                 f"{self.base_url}/me",
-                headers=headers
+                headers=self._get_headers(self.access_token)
             )
-            profile_response.raise_for_status()
-            profile = profile_response.json()
             
-            # Get email address
-            email_response = requests.get(
-                f"{self.base_url}/emailAddress?q=members&projection=(elements*(handle~))",
-                headers=headers
-            )
-            email_response.raise_for_status()
-            email_data = email_response.json()
+            if response.status_code != 200:
+                self._handle_error_response(response)
             
-            # Combine profile and email data
-            profile["email"] = email_data.get("elements", [{}])[0].get("handle~", {}).get("emailAddress")
-            
-            return profile
-        except Exception as e:
-            logger.error(f"Failed to get profile: {str(e)}")
-            raise
+            return response.json()
 
-    def get_campaigns(self, access_token: str) -> List[Dict[str, Any]]:
-        """Get LinkedIn ad campaigns"""
-        if not self.client_id:
-            logger.warning("LinkedIn client ID not configured. Returning empty campaigns list.")
-            return []
-        
-        try:
-            headers = {
-                "Authorization": f"Bearer {access_token}",
-                "cache-control": "no-cache",
-                "X-Restli-Protocol-Version": "2.0.0"
-            }
-            
-            campaigns_response = requests.get(
-                f"{self.base_url}/adCampaigns",
-                headers=headers
+    async def get_campaigns(self) -> Dict[str, Any]:
+        """Get LinkedIn campaigns"""
+        if not await self.verify_token():
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid or expired access token"
             )
-            campaigns_response.raise_for_status()
-            campaigns = campaigns_response.json().get("elements", [])
-            return campaigns
-        except Exception as e:
-            logger.error(f"Failed to get campaigns: {str(e)}")
-            return []
 
-    def get_campaign_metrics(self, access_token: str, campaign_id: str) -> Dict[str, Any]:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{self.base_url}/adAccounts",
+                headers=self._get_headers(self.access_token)
+            )
+            
+            if response.status_code != 200:
+                self._handle_error_response(response)
+            
+            return response.json()
+
+    async def get_campaign_metrics(self, campaign_id: str) -> Dict[str, Any]:
         """Get metrics for a specific campaign"""
-        if not self.client_id:
-            logger.warning("LinkedIn client ID not configured. Returning empty metrics.")
-            return {}
-        
-        try:
-            headers = {
-                "Authorization": f"Bearer {access_token}",
-                "cache-control": "no-cache",
-                "X-Restli-Protocol-Version": "2.0.0"
-            }
-            
-            metrics_response = requests.get(
-                f"{self.base_url}/adCampaigns/{campaign_id}/metrics",
-                headers=headers
+        if not await self.verify_token():
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid or expired access token"
             )
-            metrics_response.raise_for_status()
-            metrics = metrics_response.json()
-            return metrics
-        except Exception as e:
-            logger.error(f"Failed to get campaign metrics: {str(e)}")
-            return {}
+
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{self.base_url}/adAnalytics?campaigns[0]=urn:li:sponsoredCampaign:{campaign_id}",
+                headers=self._get_headers(self.access_token)
+            )
+            
+            if response.status_code != 200:
+                self._handle_error_response(response)
+            
+            return response.json()
 
     async def get_account_metrics(self, start_date: str, end_date: str) -> Dict[str, Any]:
         """Fetch account-level metrics"""
@@ -188,7 +211,7 @@ class LinkedInService:
             }
             
             # First get the user's URN
-            profile = self.get_profile(access_token)
+            profile = self.get_profile()
             author_urn = f"urn:li:person:{profile['id']}"
             
             # Create the post
@@ -217,4 +240,55 @@ class LinkedInService:
             return response.json()
         except Exception as e:
             logger.error(f"Failed to share post: {str(e)}")
-            raise 
+            raise
+
+    def sync_campaigns(self, user: User, db: Session) -> None:
+        """Sync LinkedIn campaigns with local database"""
+        campaigns = self.get_campaigns()
+        
+        for campaign_data in campaigns.get("elements", []):
+            campaign_name = campaign_data.get("name", "")
+            if not can_access_campaign(user, campaign_name, db):
+                continue
+                
+            # Find or create campaign
+            campaign = db.query(Campaign).filter(
+                Campaign.name == campaign_name
+            ).first()
+            
+            if not campaign:
+                # Find client based on campaign keywords
+                client = None
+                for db_client in db.query(Client).all():
+                    keywords = [k.strip() for k in db_client.campaign_keywords.split(",")]
+                    if any(keyword.lower() in campaign_name.lower() for keyword in keywords):
+                        client = db_client
+                        break
+                
+                if not client:
+                    continue
+                
+                campaign = Campaign(
+                    name=campaign_name,
+                    platform="linkedin",
+                    client_id=client.id
+                )
+                db.add(campaign)
+                db.commit()
+                db.refresh(campaign)
+            
+            # Update campaign metrics
+            metrics = self.get_campaign_metrics(campaign_data.get("id"))
+            
+            for metric_data in metrics.get("elements", []):
+                metric = CampaignMetric(
+                    campaign_id=campaign.id,
+                    date=metric_data.get("date"),
+                    impressions=metric_data.get("impressions", 0),
+                    clicks=metric_data.get("clicks", 0),
+                    spend=metric_data.get("spend", 0),
+                    conversions=metric_data.get("conversions", 0)
+                )
+                db.add(metric)
+            
+            db.commit() 

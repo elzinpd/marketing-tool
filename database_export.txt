@@ -1,0 +1,103 @@
+=== USERS ===
+Total Users: 8
+
+ID: 1
+Name: Admin User
+Email: admin@example.com
+Role: admin
+Active: Yes
+Clients: Healthcare Plus, Acme Corp, Finance Partners, TechStart, Global Industries, ABC Company, Demo Client, XYZ Solutions
+------------------------
+ID: 2
+Name: Agency Head
+Email: agency@example.com
+Role: agency_head
+Active: Yes
+Clients: None
+------------------------
+ID: 3
+Name: Client Manager
+Email: manager@example.com
+Role: client_manager
+Active: Yes
+Clients: Acme Corp, TechStart
+------------------------
+ID: 4
+Name: Test User
+Email: test@example.com
+Role: client_manager
+Active: Yes
+Clients: Global Industries
+------------------------
+ID: 5
+Name: Senior Manager
+Email: senior@example.com
+Role: client_manager
+Active: Yes
+Clients: Global Industries, ABC Company
+------------------------
+ID: 6
+Name: Junior Manager
+Email: junior@example.com
+Role: client_manager
+Active: Yes
+Clients: TechStart, XYZ Solutions
+------------------------
+ID: 7
+Name: Regional Manager
+Email: regional@example.com
+Role: client_manager
+Active: Yes
+Clients: Healthcare Plus
+------------------------
+ID: 8
+Name: Account Executive
+Email: account@example.com
+Role: client_manager
+Active: Yes
+Clients: Finance Partners, ABC Company
+------------------------
+
+=== CLIENTS ===
+Total Clients: 8
+
+ID: 1
+Name: Demo Client
+Keywords: marketing, demo, test
+Managers: Admin User
+------------------------
+ID: 2
+Name: Acme Corp
+Keywords: acme, anvil, roadrunner, coyote
+Managers: Client Manager, Admin User
+------------------------
+ID: 3
+Name: TechStart
+Keywords: startup, innovation, tech, AI
+Managers: Client Manager, Junior Manager, Admin User
+------------------------
+ID: 4
+Name: Global Industries
+Keywords: global, international, worldwide, multinational
+Managers: Test User, Senior Manager, Admin User
+------------------------
+ID: 5
+Name: ABC Company
+Keywords: ABC, alphabet, corporate, professional
+Managers: Senior Manager, Account Executive, Admin User
+------------------------
+ID: 6
+Name: XYZ Solutions
+Keywords: XYZ, solution, service, business
+Managers: Junior Manager, Admin User
+------------------------
+ID: 7
+Name: Healthcare Plus
+Keywords: healthcare, medical, wellness, hospital, clinic
+Managers: Regional Manager, Admin User
+------------------------
+ID: 8
+Name: Finance Partners
+Keywords: finance, banking, investment, money, wealth
+Managers: Account Executive, Admin User
+------------------------

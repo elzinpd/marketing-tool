@@ -1,8 +1,14 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, JSON, Boolean
+from sqlalchemy import Boolean, Column, Integer, String, Table, ForeignKey
 from sqlalchemy.orm import relationship
-from datetime import datetime
-from sqlalchemy.sql import func
-from app.core.database import Base
+from app.db.database import Base
+
+# Association table for user-client relationship
+user_client = Table(
+    'user_client',
+    Base.metadata,
+    Column('user_id', Integer, ForeignKey('users.id')),
+    Column('client_id', Integer, ForeignKey('clients.id'))
+)
 
 class User(Base):
     __tablename__ = "users"
@@ -10,74 +16,25 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True)
     hashed_password = Column(String)
-    full_name = Column(String)
+    role = Column(String, default="user")
     is_active = Column(Boolean, default=True)
-    is_superuser = Column(Boolean, default=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-class Campaign(Base):
-    __tablename__ = "campaigns"
-
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, index=True)
-    platform = Column(String)  # LinkedIn, Rollworks, etc.
-    start_date = Column(DateTime)
-    end_date = Column(DateTime, nullable=True)
-    status = Column(String)  # Active, Paused, Completed
-    total_budget = Column(Float)
-    spent_budget = Column(Float, default=0.0)
-    client_id = Column(Integer, ForeignKey("clients.id"))
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-    client = relationship("Client", back_populates="campaigns")
-    metrics = relationship("CampaignMetrics", back_populates="campaign")
+    
+    # Many-to-many relationship with clients
+    assigned_clients = relationship("Client", secondary=user_client, back_populates="assigned_users")
 
 class Client(Base):
     __tablename__ = "clients"
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True)
-    total_budget = Column(Float)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-    campaigns = relationship("Campaign", back_populates="client")
-
-class CampaignMetrics(Base):
-    __tablename__ = "campaign_metrics"
-
-    id = Column(Integer, primary_key=True, index=True)
-    campaign_id = Column(Integer, ForeignKey("campaigns.id"))
-    date = Column(DateTime)
-    impressions = Column(Integer)
-    clicks = Column(Integer)
-    spend = Column(Float)
-    conversions = Column(Integer)
-    metrics_data = Column(JSON)  # Store additional platform-specific metrics
-
-    campaign = relationship("Campaign", back_populates="metrics")
-
-class Report(Base):
-    __tablename__ = "reports"
-
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, index=True)
-    client_id = Column(Integer, ForeignKey("clients.id"))
-    start_date = Column(DateTime)
-    end_date = Column(DateTime)
-    template_id = Column(Integer, ForeignKey("report_templates.id"))
-    status = Column(String)  # Draft, Generated, Archived
-    file_path = Column(String, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-class ReportTemplate(Base):
-    __tablename__ = "report_templates"
-
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, index=True)
-    description = Column(String)
-    template_path = Column(String)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow) 
+    campaign_keywords = Column(String)  # Stored as comma-separated string
+    
+    # Many-to-many relationship with users
+    assigned_users = relationship("User", secondary=user_client, back_populates="assigned_clients")
+    
+    # Get campaign keywords as a list
+    @property
+    def campaign_keywords_list(self):
+        if not self.campaign_keywords:
+            return []
+        return [keyword.strip() for keyword in self.campaign_keywords.split(',') if keyword.strip()] 

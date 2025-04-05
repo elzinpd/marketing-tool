@@ -3,20 +3,27 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import datetime
 from app.core.database import get_db
-from app.models import models
+from app.db import models
 from app.services.linkedin_service import LinkedInService
 from app.services.rollworks_service import RollworksService
 from pydantic import BaseModel
-from . import auth
 
+# Create the main API router
 api_router = APIRouter()
 
 # Initialize services
 linkedin_service = LinkedInService()
 rollworks_service = RollworksService()
 
-# Include auth router
-api_router.include_router(auth.router, prefix="/auth", tags=["authentication"])
+# Import endpoint modules
+from app.api.api_v1.endpoints import auth, clients, users, linkedin, reports
+
+# Register standard routers
+api_router.include_router(auth.router, prefix="/auth", tags=["Authentication"])
+api_router.include_router(users.router, prefix="/users", tags=["Users"])
+api_router.include_router(clients.router, prefix="/clients", tags=["Clients"])
+api_router.include_router(linkedin.router, prefix="/linkedin", tags=["LinkedIn"])
+api_router.include_router(reports.router, prefix="/reports", tags=["Reports"])
 
 # Campaign models
 class CampaignBase(BaseModel):
@@ -82,10 +89,10 @@ async def get_campaign_metrics(
     if campaign is None:
         raise HTTPException(status_code=404, detail="Campaign not found")
     
-    metrics = db.query(models.CampaignMetrics).filter(
-        models.CampaignMetrics.campaign_id == campaign_id,
-        models.CampaignMetrics.date >= start_date,
-        models.CampaignMetrics.date <= end_date
+    metrics = db.query(models.CampaignMetric).filter(
+        models.CampaignMetric.campaign_id == campaign_id,
+        models.CampaignMetric.date >= start_date,
+        models.CampaignMetric.date <= end_date
     ).all()
     
     return metrics 

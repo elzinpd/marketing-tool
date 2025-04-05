@@ -17,5 +17,7 @@ export default defineConfig({
         changeOrigin: true,
       },
     },
+    strictPort: true,
   },
+  base: '/',
 }) 

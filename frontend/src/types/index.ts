@@ -27,9 +27,11 @@ export interface CampaignMetrics {
 export interface Client {
   id: number;
   name: string;
-  total_budget: number;
-  created_at: string;
-  updated_at: string;
+  campaign_keywords: string;
+  campaign_keywords_list?: string[];
+  created_at?: string;
+  updated_at?: string;
+  is_active?: boolean;
 }
 
 export interface ReportTemplate {
