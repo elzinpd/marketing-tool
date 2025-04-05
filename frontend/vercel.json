@@ -2,7 +2,7 @@
   "framework": "vite",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "installCommand": "npm install",
+  "installCommand": "npm install --legacy-peer-deps",
   "rewrites": [
     { "source": "/api/(.*)", "destination": "https://your-backend-url.com/api/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
