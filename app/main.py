@@ -81,6 +81,7 @@ app.add_middleware(
         "http://localhost:3000",  # Another common development port
         "https://marketing-tool-frontend.vercel.app",  # Production frontend
         "https://marketing-tool-ed4e.vercel.app",  # Your actual frontend domain
+        "https://marketing-tool-omega.vercel.app",  # Your actual backend domain
         (
             settings.FRONTEND_URL if hasattr(settings, "FRONTEND_URL") else ""
         ),  # Production frontend from settings
