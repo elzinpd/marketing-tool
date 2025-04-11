@@ -9,11 +9,24 @@
   <meta name="theme-color" content="#4a90e2" />
   <title>Marketing Tool</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <!-- Development scripts - can be removed for production -->
-  <script src="/dev-scripts/fix-share-modal.js"></script>
-  <script src="/dev-scripts/share-modal.js"></script>
-  <script src="/dev-scripts/test-api.js"></script>
-  <script src="/dev-scripts/login-fix.js"></script>
+  <!-- Development scripts - only loaded in development mode -->
+  <script type="module">
+    // Only load development scripts in development mode
+    if (import.meta.env.DEV) {
+      const scripts = [
+        '/dev-scripts/fix-share-modal.js',
+        '/dev-scripts/share-modal.js',
+        '/dev-scripts/test-api.js',
+        '/dev-scripts/login-fix.js'
+      ];
+
+      scripts.forEach(src => {
+        const script = document.createElement('script');
+        script.src = src;
+        document.head.appendChild(script);
+      });
+    }
+  </script>
 </head>
 
 <body class="bg-gray-50">
