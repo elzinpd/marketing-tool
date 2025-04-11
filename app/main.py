@@ -79,9 +79,11 @@ app.add_middleware(
         "http://localhost:5173",  # Development frontend
         "http://localhost:5177",  # Alternative development port
         "http://localhost:3000",  # Another common development port
+        "https://marketing-tool-frontend.vercel.app",  # Production frontend
+        "https://marketing-tool-ed4e.vercel.app",  # Your actual frontend domain
         (
             settings.FRONTEND_URL if hasattr(settings, "FRONTEND_URL") else ""
-        ),  # Production frontend
+        ),  # Production frontend from settings
     ],
     allow_credentials=True,
     allow_methods=["*"],  # Allows all methods
