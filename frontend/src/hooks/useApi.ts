@@ -2,9 +2,10 @@ import axios, { AxiosError } from "axios";
 import { useCallback, useMemo } from "react";
 import { useAuth } from "../contexts/AuthContext";
 
-const API_BASE_URL = `${
-  import.meta.env.VITE_API_URL || "http://localhost:8001"
-}/api/v1`;
+// Force the correct URL for Vercel deployment
+const API_BASE_URL = `https://marketing-tool-omega.vercel.app/api/v1`;
+// Fallback to environment variable or localhost for development
+// const API_BASE_URL = `${import.meta.env.VITE_API_URL || "http://localhost:8001"}/api/v1`;
 
 interface ErrorResponse {
   message?: string;

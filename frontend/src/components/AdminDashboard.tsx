@@ -83,7 +83,10 @@ const TabPanel = React.memo((props: TabPanelProps) => {
 
 // Helper function to get the API base URL
 const getApiBaseUrl = () => {
-  return `${import.meta.env.VITE_API_URL || "http://localhost:8001"}/api/v1`;
+  // Force the correct URL for Vercel deployment
+  return `https://marketing-tool-omega.vercel.app/api/v1`;
+  // Fallback to environment variable or localhost for development
+  // return `${import.meta.env.VITE_API_URL || "http://localhost:8001"}/api/v1`;
 };
 
 const AdminDashboard: React.FC = () => {
@@ -182,9 +185,7 @@ const AdminDashboardContent: React.FC = () => {
 
       // Use direct axios calls with the API base URL to ensure we're hitting the right endpoints
       const clientsResponse = await axios.get(
-        `${
-          import.meta.env.VITE_API_URL || "http://localhost:8001"
-        }/api/v1/clients`,
+        `https://marketing-tool-omega.vercel.app/api/v1/clients`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -197,9 +198,7 @@ const AdminDashboardContent: React.FC = () => {
 
       // If clients request succeeded, try users request
       const usersResponse = await axios.get(
-        `${
-          import.meta.env.VITE_API_URL || "http://localhost:8001"
-        }/api/v1/users`,
+        `https://marketing-tool-omega.vercel.app/api/v1/users`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

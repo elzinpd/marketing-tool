@@ -29,7 +29,10 @@ import { useAuth } from "../contexts/AuthContext";
 
 // Helper function to get the API base URL
 const getApiBaseUrl = () => {
-  return `${import.meta.env.VITE_API_URL || "http://localhost:8001"}/api/v1`;
+  // Force the correct URL for Vercel deployment
+  return `https://marketing-tool-omega.vercel.app/api/v1`;
+  // Fallback to environment variable or localhost for development
+  // return `${import.meta.env.VITE_API_URL || "http://localhost:8001"}/api/v1`;
 };
 
 // Interface definitions

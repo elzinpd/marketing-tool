@@ -19,7 +19,10 @@ const failedQueue: Array<{
 let isRefreshing = false;
 
 // Get the API URL from environment variables
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8001";
+// Force the correct URL for Vercel deployment
+const API_URL = "https://marketing-tool-omega.vercel.app";
+// Fallback to environment variable or localhost for development
+// const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8001";
 
 const api = axios.create({
   baseURL: `${API_URL}/api/v1`, // Use the environment variable for Vercel deployment

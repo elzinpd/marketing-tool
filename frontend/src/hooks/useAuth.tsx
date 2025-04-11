@@ -9,9 +9,10 @@ import {
 import { useNavigate } from "react-router-dom";
 
 // Using the same API_URL defined in useApi.tsx
-const API_URL = `${
-  import.meta.env.VITE_API_URL || "http://localhost:8001"
-}/api/v1`;
+// Force the correct URL for Vercel deployment
+const API_URL = `https://marketing-tool-omega.vercel.app/api/v1`;
+// Fallback to environment variable or localhost for development
+// const API_URL = `${import.meta.env.VITE_API_URL || "http://localhost:8001"}/api/v1`;
 
 interface User {
   id: number;
