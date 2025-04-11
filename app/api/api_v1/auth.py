@@ -23,7 +23,8 @@ async def oauth_callback(request: Request):
                 "client_id": settings.ROLLWORKS_CLIENT_ID,
                 "client_secret": settings.ROLLWORKS_CLIENT_SECRET,
                 "redirect_uri": f"{settings.API_V1_STR}/auth/callback"
-            }
+            },
+            timeout=30
         )
         token_response.raise_for_status()
         token_data = token_response.json()
@@ -36,4 +37,4 @@ async def oauth_callback(request: Request):
         return RedirectResponse(url="/dashboard")
 
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e)) 
+        raise HTTPException(status_code=400, detail=str(e))

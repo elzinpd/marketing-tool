@@ -20,7 +20,8 @@ class ClientInfo(BaseModel):
 class UserResponse(UserBase):
     id: int
     is_active: bool
+    force_password_change: bool = True
     clients: List[ClientInfo] = []
 
     class Config:
-        from_attributes = True 
+        from_attributes = True

@@ -13,6 +13,21 @@ from app.schemas.user import UserCreate, UserUpdate, UserResponse
 router = APIRouter()
 logger = logging.getLogger("users_api")
 
+
+def prepare_user_response(user: User) -> Dict[str, Any]:
+    """Prepare user response with client information"""
+    return {
+        "id": user.id,
+        "email": user.email,
+        "name": user.name,
+        "role": user.role,
+        "is_active": user.is_active,
+        "clients": [
+            {"id": client.id, "name": client.name}
+            for client in user.clients
+        ]
+    }
+
 class UserBase(BaseModel):
     email: EmailStr
     name: Optional[str] = None
@@ -87,7 +102,7 @@ def get_users(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only admin users can view all users"
         )
-    
+
     users = db.query(User).all()
     return [prepare_user_response(user) for user in users]
 
@@ -107,7 +122,7 @@ async def create_user(
             status_code=400,
             detail="Email already registered"
         )
-    
+
     # Validate role
     valid_roles = ["admin", "agency_head", "client_manager"]
     if user.role not in valid_roles:
@@ -115,7 +130,7 @@ async def create_user(
             status_code=400,
             detail=f"Invalid role. Must be one of: {', '.join(valid_roles)}"
         )
-    
+
     try:
         # Create user
         hashed_password = get_password_hash(user.password)
@@ -124,11 +139,12 @@ async def create_user(
             hashed_password=hashed_password,
             role=user.role,
             is_active=True
+            # force_password_change will use the default value from the model
         )
         db.add(db_user)
         db.commit()
         db.refresh(db_user)
-        
+
         # Return user with properly formatted response
         return prepare_user_response(db_user)
     except Exception as e:
@@ -174,7 +190,7 @@ async def update_user(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found"
             )
-            
+
         # Update user attributes
         if user.email is not None:
             db_user.email = user.email
@@ -186,15 +202,15 @@ async def update_user(
             db_user.role = user.role
         if user.is_active is not None:
             db_user.is_active = user.is_active
-            
+
         # Update client relationships if provided
         if user.clients is not None:
             clients = db.query(Client).filter(Client.id.in_(user.clients)).all()
             db_user.clients = clients
-            
+
         db.commit()
         db.refresh(db_user)
-        
+
         return prepare_user_response(db_user)
     except Exception as e:
         logger.error(f"Error updating user: {e}")
@@ -219,14 +235,64 @@ async def delete_user(
             status_code=400,
             detail="Cannot delete yourself"
         )
-    
+
     db_user = db.query(User).filter(User.id == user_id).first()
     if not db_user:
         raise HTTPException(
             status_code=404,
             detail="User not found"
         )
-    
+
     db.delete(db_user)
     db.commit()
-    return None 
+    return None
+
+
+class ClientAssignment(BaseModel):
+    client_id: int
+
+
+@router.post("/{user_id}/clients", response_model=UserResponse)
+async def assign_client_to_user(
+    user_id: int,
+    client_assignment: ClientAssignment,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_admin)
+):
+    """
+    Assign a client to a user (admin only)
+    """
+    try:
+        # Get existing user
+        db_user = db.query(User).filter(User.id == user_id).first()
+        if not db_user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+
+        # Get client
+        client = db.query(Client).filter(Client.id == client_assignment.client_id).first()
+        if not client:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Client not found"
+            )
+
+        # Check if client is already assigned to user
+        if client in db_user.clients:
+            return prepare_user_response(db_user)
+
+        # Assign client to user
+        db_user.clients.append(client)
+        db.commit()
+        db.refresh(db_user)
+
+        return prepare_user_response(db_user)
+    except Exception as e:
+        logger.error(f"Error assigning client to user: {e}")
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error assigning client to user: {str(e)}"
+        )

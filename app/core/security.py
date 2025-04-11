@@ -1,9 +1,10 @@
 from passlib.context import CryptContext
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 from jose import JWTError, jwt
 import logging
 import hashlib
+import os
 from app.core.config import settings
 
 # Set up logging
@@ -20,9 +21,9 @@ pwd_context = CryptContext(
 )
 
 # JWT settings
-SECRET_KEY = "your-secret-key-here"  # Change this in production!
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-here")  # Use environment variable
+ALGORITHM = os.getenv("ALGORITHM", "HS256")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against a hash with error handling"""
@@ -52,18 +53,19 @@ def get_password_hash(password: str) -> str:
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     """Create a new JWT access token with proper claims"""
     to_encode = data.copy()
-    
+
     # Set proper expiration time
+    now = datetime.now(timezone.utc)
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = now + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    
+        expire = now + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+
     to_encode.update({"exp": expire.timestamp()})
-    
+
     # Log token creation details (without sensitive data)
     logger.debug(f"Creating token for user: {to_encode.get('sub')} with exp: {expire.isoformat()}")
-    
+
     # Create JWT token
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
-    return encoded_jwt 
+    return encoded_jwt

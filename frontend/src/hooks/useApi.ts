@@ -1,8 +1,10 @@
-import { useCallback, useMemo } from 'react';
-import axios, { AxiosError } from 'axios';
-import { useAuth } from '../contexts/AuthContext';
+import axios, { AxiosError } from "axios";
+import { useCallback, useMemo } from "react";
+import { useAuth } from "../contexts/AuthContext";
 
-const API_BASE_URL = 'http://localhost:8000/api/v1';
+const API_BASE_URL = `${
+  import.meta.env.VITE_API_URL || "http://localhost:8001"
+}/api/v1`;
 
 interface ErrorResponse {
   message?: string;
@@ -17,21 +19,21 @@ export const useApi = () => {
     const instance = axios.create({
       baseURL: API_BASE_URL,
       headers: {
-        'Content-Type': 'application/json',
-      }
+        "Content-Type": "application/json",
+      },
     });
 
     // Add request interceptor to add token
     instance.interceptors.request.use(
       (config) => {
         // Only add token if it exists and is not empty
-        if (token && token.trim() !== '') {
+        if (token && token.trim() !== "") {
           config.headers.Authorization = `Bearer ${token}`;
         }
         return config;
       },
       (error) => {
-        console.error('Request interceptor error:', error);
+        console.error("Request interceptor error:", error);
         return Promise.reject(error);
       }
     );
@@ -41,12 +43,12 @@ export const useApi = () => {
       (response) => response.data,
       (error: AxiosError) => {
         if (error.response?.status === 401) {
-          console.log('Unauthorized access, logging out');
+          console.log("Unauthorized access, logging out");
           logout();
         } else if (error.response?.status === 403) {
-          console.error('Forbidden access');
+          console.error("Forbidden access");
         } else if (!error.response) {
-          console.error('Network error:', error.message);
+          console.error("Network error:", error.message);
         }
         return Promise.reject(error);
       }
@@ -60,9 +62,10 @@ export const useApi = () => {
       const axiosError = error as AxiosError<ErrorResponse>;
       if (!axiosError.response) {
         console.error(`Network error during ${operation}:`, axiosError.message);
-        throw new Error('Network error. Please check your connection.');
+        throw new Error("Network error. Please check your connection.");
       }
-      const errorMessage = axiosError.response.data?.message || axiosError.message;
+      const errorMessage =
+        axiosError.response.data?.message || axiosError.message;
       console.error(`${operation} failed:`, errorMessage);
       throw new Error(errorMessage);
     }
@@ -70,42 +73,54 @@ export const useApi = () => {
     throw error;
   }, []);
 
-  const get = useCallback(async (endpoint: string) => {
-    try {
-      return await api.get(endpoint);
-    } catch (error) {
-      return handleError(error, `GET ${endpoint}`);
-    }
-  }, [api, handleError]);
+  const get = useCallback(
+    async (endpoint: string) => {
+      try {
+        return await api.get(endpoint);
+      } catch (error) {
+        return handleError(error, `GET ${endpoint}`);
+      }
+    },
+    [api, handleError]
+  );
 
-  const post = useCallback(async (endpoint: string, data: any) => {
-    try {
-      return await api.post(endpoint, data);
-    } catch (error) {
-      return handleError(error, `POST ${endpoint}`);
-    }
-  }, [api, handleError]);
+  const post = useCallback(
+    async (endpoint: string, data: any) => {
+      try {
+        return await api.post(endpoint, data);
+      } catch (error) {
+        return handleError(error, `POST ${endpoint}`);
+      }
+    },
+    [api, handleError]
+  );
 
-  const put = useCallback(async (endpoint: string, data: any) => {
-    try {
-      return await api.put(endpoint, data);
-    } catch (error) {
-      return handleError(error, `PUT ${endpoint}`);
-    }
-  }, [api, handleError]);
+  const put = useCallback(
+    async (endpoint: string, data: any) => {
+      try {
+        return await api.put(endpoint, data);
+      } catch (error) {
+        return handleError(error, `PUT ${endpoint}`);
+      }
+    },
+    [api, handleError]
+  );
 
-  const del = useCallback(async (endpoint: string) => {
-    try {
-      return await api.delete(endpoint);
-    } catch (error) {
-      return handleError(error, `DELETE ${endpoint}`);
-    }
-  }, [api, handleError]);
+  const del = useCallback(
+    async (endpoint: string) => {
+      try {
+        return await api.delete(endpoint);
+      } catch (error) {
+        return handleError(error, `DELETE ${endpoint}`);
+      }
+    },
+    [api, handleError]
+  );
 
   return {
     get,
     post,
     put,
-    delete: del
+    delete: del,
   };
-}; 
+};

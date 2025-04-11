@@ -19,6 +19,7 @@ import {
   TableHead,
   TableRow,
   Paper,
+  SelectChangeEvent,
 } from '@mui/material';
 import { DateRangePicker } from '@mui/x-date-pickers-pro';
 import { format } from 'date-fns';
@@ -51,7 +52,7 @@ const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const api = useApi();
   const [clients, setClients] = useState<Client[]>([]);
-  const [selectedClient, setSelectedClient] = useState<number | ''>('');
+  const [selectedClient, setSelectedClient] = useState<string>('');
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [metrics, setMetrics] = useState<Record<string, MetricData[]>>({});
   const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([null, null]);
@@ -94,9 +95,9 @@ const Dashboard: React.FC = () => {
         try {
           const response = await api.get(`/linkedin/campaigns/${campaign.id}/metrics`, {
             params: {
-              start_date: format(dateRange[0], 'yyyy-MM-dd'),
-              end_date: format(dateRange[1], 'yyyy-MM-dd'),
-            },
+              start_date: dateRange[0] ? format(dateRange[0], 'yyyy-MM-dd') : '',
+              end_date: dateRange[1] ? format(dateRange[1], 'yyyy-MM-dd') : '',
+            }
           });
           metricsData[campaign.id] = response.data.elements;
         } catch (error) {
@@ -110,13 +111,13 @@ const Dashboard: React.FC = () => {
     fetchMetrics();
   }, [api, selectedClient, campaigns, dateRange]);
 
-  const handleClientChange = (event: React.ChangeEvent<{ value: unknown }>) => {
-    setSelectedClient(event.target.value as number);
+  const handleClientChange = (event: SelectChangeEvent) => {
+    setSelectedClient(event.target.value);
   };
 
   const handleSync = async () => {
     try {
-      await api.post('/linkedin/sync');
+      await api.post('/linkedin/sync', {});
       // Refresh campaigns and metrics
       const response = await api.get('/linkedin/campaigns');
       setCampaigns(response.data);
@@ -141,7 +142,7 @@ const Dashboard: React.FC = () => {
                       label="Select Client"
                     >
                       {clients.map((client) => (
-                        <MenuItem key={client.id} value={client.id}>
+                        <MenuItem key={client.id} value={client.id.toString()}>
                           {client.name}
                         </MenuItem>
                       ))}

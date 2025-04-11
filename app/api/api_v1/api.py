@@ -11,6 +11,11 @@ from pydantic import BaseModel
 # Create the main API router
 api_router = APIRouter()
 
+# Health check endpoint
+@api_router.get("/health", tags=["Health"])
+async def health_check():
+    return {"status": "ok", "message": "API is running"}
+
 # Initialize services
 linkedin_service = LinkedInService()
 rollworks_service = RollworksService()
@@ -88,11 +93,11 @@ async def get_campaign_metrics(
     campaign = db.query(models.Campaign).filter(models.Campaign.id == campaign_id).first()
     if campaign is None:
         raise HTTPException(status_code=404, detail="Campaign not found")
-    
+
     metrics = db.query(models.CampaignMetric).filter(
         models.CampaignMetric.campaign_id == campaign_id,
         models.CampaignMetric.date >= start_date,
         models.CampaignMetric.date <= end_date
     ).all()
-    
-    return metrics 
+
+    return metrics

@@ -21,8 +21,12 @@ def get_current_user(
             token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
         )
         token_data = payload
-        user_id: Optional[int] = token_data.get("sub")
-        if user_id is None:
+
+        # Check if we have a user ID in the token
+        user_id = token_data.get("uid")
+        email = token_data.get("sub")
+
+        if user_id is None and email is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Could not validate credentials",
@@ -34,8 +38,13 @@ def get_current_user(
             detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
-        
-    user = db.query(User).filter(User.id == user_id).first()
+
+    # Try to find the user by ID first, then by email
+    if user_id:
+        user = db.query(User).filter(User.id == user_id).first()
+    else:
+        user = db.query(User).filter(User.email == email).first()
+
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -67,11 +76,11 @@ def get_current_active_admin(current_user: User = Depends(get_current_user)) -> 
 def get_current_active_agency_head(current_user: User = Depends(get_current_active_user)):
     if current_user.role not in ["admin", "agency_head"]:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, 
+            status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions"
         )
     return current_user
 
 def get_current_manager_or_above(current_user: User = Depends(get_current_active_user)):
     """Allow access to admin, agency_head, or client_manager"""
-    return current_user 
+    return current_user

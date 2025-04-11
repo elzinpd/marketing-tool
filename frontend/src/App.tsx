@@ -1,16 +1,20 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
-import { ThemeProvider, CssBaseline, Box, CircularProgress, Button, Typography, Paper } from '@mui/material';
-import { useAuth, AuthProvider } from './contexts/AuthContext';
-import theme from './theme';
-import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import AdminDashboard from './pages/AdminDashboard';
-import UserManagement from './pages/UserManagement';
-import ClientManagement from './pages/ClientManagement';
-import ClientDashboards from './pages/ClientDashboards';
-import SystemSettings from './pages/SystemSettings';
+import { Box, Button, CircularProgress, CssBaseline, Paper, ThemeProvider, Typography } from '@mui/material';
+import React, { useEffect, useState } from 'react';
+import { Link, Navigate, Route, BrowserRouter as Router, Routes, useLocation, useNavigate } from 'react-router-dom';
+import ChangePassword from './components/ChangePassword';
 import Navbar from './components/Navbar';
+import PasswordReset from './components/PasswordReset';
+import PrivateRoute from './components/PrivateRoute';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import AdminDashboard from './pages/AdminDashboard';
+import ClientDashboards from './pages/ClientDashboards';
+import ClientManagement from './pages/ClientManagement';
+import Dashboard from './pages/Dashboard';
+import Login from './pages/Login';
+import SystemSettings from './pages/SystemSettings';
+import TestPage from './pages/TestPage';
+import UserManagement from './pages/UserManagement';
+import theme from './theme';
 
 // Add a proper 404 Page component
 const NotFoundPage = () => {
@@ -46,38 +50,85 @@ const NotFoundPage = () => {
   );
 };
 
-// Enhanced version of ProtectedRoute for better debugging
+// Enhanced version of ProtectedRoute with permanent fixes
 const ProtectedRoute = ({ children, adminOnly = false }: { children: React.ReactNode, adminOnly?: boolean }) => {
   const { isAuthenticated, user, isLoading } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  // Log the auth state for debugging
-  console.log('Protected route state:', { 
-    isAuthenticated, 
-    userRole: user?.role, 
-    isLoading,
-    adminOnly,
-    hasToken: !!localStorage.getItem('token')
-  });
+  // Check if we have a token and user in localStorage
+  const hasToken = !!localStorage.getItem('token');
+  const hasUser = !!localStorage.getItem('user');
 
-  // Show loading state
+  // Log the auth state for debugging (only in development)
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('ROUTE: Protected route state:', {
+        isAuthenticated: isAuthenticated(),
+        userRole: user?.role,
+        isLoading,
+        adminOnly,
+        path: location.pathname,
+        hasToken,
+        hasUser
+      });
+    }
+  }, [isAuthenticated, user, isLoading, adminOnly, location.pathname, hasToken, hasUser]);
+
+  // PERMANENT FIX: If auth context says not authenticated but we have token/user in localStorage,
+  // use the localStorage data instead
+  if (!isAuthenticated() && hasToken && hasUser) {
+    // Only check admin status for admin routes
+    if (adminOnly) {
+      try {
+        const userObj = JSON.parse(localStorage.getItem('user') || '{}');
+        if (userObj.role !== 'admin') {
+          return <Navigate to="/dashboard" replace />;
+        }
+      } catch (e) {
+        console.error('Error parsing user object:', e);
+      }
+    }
+
+    // Allow access to the route
+    return <>{children}</>;
+  }
+
+  // Show loading state (but only briefly)
   if (isLoading) {
+    // Set a timeout to show a helpful message if loading takes too long
+    setTimeout(() => {
+      const loadingElement = document.querySelector('.loading-indicator');
+      if (loadingElement) {
+        loadingElement.innerHTML = 'Loading taking longer than expected...';
+      }
+    }, 3000);
+
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh" flexDirection="column" className="loading-indicator">
         <CircularProgress />
+        <Typography variant="body2" color="textSecondary" sx={{ mt: 2 }}>
+          Loading...
+        </Typography>
       </Box>
     );
   }
 
-  // Check auth status
-  if (!isAuthenticated) {
-    console.log("Protected route: Not authenticated, redirecting to login");
+  // Normal auth check
+  if (!isAuthenticated()) {
+    // Store the current path to redirect back after login
+    sessionStorage.setItem('redirectPath', location.pathname);
     return <Navigate to="/login" replace />;
   }
 
   // Check admin status for admin routes
   if (adminOnly && user?.role !== 'admin') {
-    console.log("Protected route: Not admin, redirecting to dashboard");
     return <Navigate to="/dashboard" replace />;
+  }
+
+  // Check if user needs to change password
+  if (user?.force_password_change && location.pathname !== '/change-password') {
+    return <Navigate to="/change-password" replace />;
   }
 
   // User is authenticated and has proper role, render children
@@ -86,21 +137,49 @@ const ProtectedRoute = ({ children, adminOnly = false }: { children: React.React
 
 const AppContent = () => {
   const { isAuthenticated, isLoading } = useAuth();
+  const [loadingTooLong, setLoadingTooLong] = useState(false);
 
-  // Debug authentication state on each render
-  console.log('App authentication state:', { 
-    isAuthenticated: isAuthenticated(), 
-    isLoading, 
-    hasLocalToken: !!localStorage.getItem('token') 
-  });
+  // Log authentication state in development
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('APP: Authentication state:', {
+        isAuthenticated: isAuthenticated(),
+        isLoading,
+        hasLocalToken: !!localStorage.getItem('token')
+      });
+    }
+  }, [isAuthenticated, isLoading]);
 
-  // Show loading state during initial auth check
-  if (isLoading) {
+  // Set loadingTooLong to true after a timeout
+  useEffect(() => {
+    if (isLoading) {
+      const timer = setTimeout(() => {
+        setLoadingTooLong(true);
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading]);
+
+  // Check if we have authentication data in localStorage
+  const hasToken = !!localStorage.getItem('token');
+  const hasUser = !!localStorage.getItem('user');
+
+  // Show loading state during initial auth check, but only if we haven't been loading too long
+  if (isLoading && !loadingTooLong) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh" flexDirection="column">
         <CircularProgress />
+        <Typography variant="body2" color="textSecondary" sx={{ mt: 2 }}>
+          Loading application...
+        </Typography>
       </Box>
     );
+  }
+
+  // If loading is taking too long but we have auth data, continue anyway
+  if (loadingTooLong && hasToken && hasUser) {
+    // Continue to the app content
   }
 
   return (
@@ -109,77 +188,99 @@ const AppContent = () => {
       <Box component="main" sx={{ flexGrow: 1, bgcolor: 'background.default', p: 3 }}>
         <Routes>
           {/* Login route - redirect to dashboard if already logged in */}
-          <Route 
-            path="/login" 
-            element={isAuthenticated() ? <Navigate to="/dashboard" replace /> : <Login />} 
+          <Route
+            path="/login"
+            element={isAuthenticated() ? <Navigate to="/dashboard" replace /> : <Login />}
           />
-          
+
+          {/* Password reset route */}
+          <Route
+            path="/reset-password"
+            element={<PasswordReset />}
+          />
+
+          {/* Change password route */}
+          <Route
+            path="/change-password"
+            element={
+              <PrivateRoute>
+                <ChangePassword />
+              </PrivateRoute>
+            }
+          />
+
           {/* Protected dashboard route */}
           <Route
             path="/dashboard"
             element={
-              <ProtectedRoute>
+              <PrivateRoute>
                 <Dashboard />
-              </ProtectedRoute>
+              </PrivateRoute>
             }
           />
-          
+
           {/* Protected admin dashboard route */}
           <Route
             path="/admin"
             element={
-              <ProtectedRoute adminOnly>
+              <PrivateRoute adminOnly>
                 <AdminDashboard />
-              </ProtectedRoute>
+              </PrivateRoute>
             }
           />
-          
+
           {/* Protected user management route */}
           <Route
             path="/users"
             element={
-              <ProtectedRoute adminOnly>
+              <PrivateRoute adminOnly>
                 <UserManagement />
-              </ProtectedRoute>
+              </PrivateRoute>
             }
           />
-          
+
           {/* Protected client management route */}
           <Route
             path="/clients"
             element={
-              <ProtectedRoute adminOnly>
+              <PrivateRoute adminOnly>
                 <ClientManagement />
-              </ProtectedRoute>
+              </PrivateRoute>
             }
           />
-          
+
           {/* Protected client dashboards route */}
           <Route
             path="/client-dashboards"
             element={
-              <ProtectedRoute>
+              <PrivateRoute>
                 <ClientDashboards />
-              </ProtectedRoute>
+              </PrivateRoute>
             }
           />
-          
+
           {/* Protected system settings route */}
           <Route
             path="/system-settings"
             element={
-              <ProtectedRoute>
+              <PrivateRoute>
                 <SystemSettings />
-              </ProtectedRoute>
+              </PrivateRoute>
             }
           />
-          
+
           {/* Default route redirects to dashboard if authenticated, otherwise to login */}
-          <Route 
-            path="/" 
-            element={isAuthenticated() ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />} 
+          <Route
+            path="/"
+            element={isAuthenticated() ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />}
           />
-          
+
+          {/* Test page route */}
+          <Route
+            path="/test"
+            element={<TestPage />}
+          />
+
           {/* 404 route handling */}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
@@ -204,4 +305,4 @@ const App = () => {
   );
 };
 
-export default App; 
+export default App;

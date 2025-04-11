@@ -21,7 +21,7 @@ const ClientManagement: React.FC = () => {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [clientForm, setClientForm] = useState({
     name: '',
-    campaign_keywords: '',
+    campaign_keywords: ''
   });
   const [notification, setNotification] = useState({
     open: false,
@@ -57,7 +57,7 @@ const ClientManagement: React.FC = () => {
     setSelectedClient(null);
     setClientForm({
       name: '',
-      campaign_keywords: '',
+      campaign_keywords: ''
     });
     setOpenDialog(true);
   };
@@ -71,7 +71,7 @@ const ClientManagement: React.FC = () => {
       name: client.name || '',
       campaign_keywords: typeof client.campaign_keywords === 'string' 
         ? client.campaign_keywords 
-        : client.campaign_keywords_list?.join(', ') || '',
+        : client.campaign_keywords_list?.join(', ') || ''
     });
     
     console.log('Set client form to:', {
@@ -302,12 +302,9 @@ const ClientManagement: React.FC = () => {
               id="campaign_keywords"
               label="Campaign Keywords (comma-separated)"
               name="campaign_keywords"
-              placeholder="keyword1, keyword2, keyword3"
-              multiline
-              rows={4}
               value={clientForm.campaign_keywords}
               onChange={handleInputChange}
-              helperText="Enter keywords that will be used to match campaigns from LinkedIn and Rollworks"
+              helperText="Enter keywords separated by commas"
             />
           </Box>
         </DialogContent>

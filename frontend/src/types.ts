@@ -37,4 +37,38 @@ export interface Campaign {
   conversion_rate: number;
   cpc: number;
   cpa: number;
+}
+
+export interface CampaignMetrics {
+  impressions: number;
+  clicks: number;
+  spend: number;
+  conversions: number;
+  start_date: string;
+  end_date: string;
+  day_metrics?: Array<{
+    date: string;
+    impressions: number;
+    clicks: number;
+    spend: number;
+    conversions: number;
+  }>;
+}
+
+export interface Report {
+  id: number;
+  title: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+  user_id: number;
+  client_id: number;
+}
+
+export interface ReportTemplate {
+  id: number;
+  name: string;
+  description?: string;
+  created_at: string;
+  updated_at: string;
 } 

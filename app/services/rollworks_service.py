@@ -28,7 +28,7 @@ class RollworksService:
         """Generate Rollworks OAuth2 authorization URL"""
         if not self.api_key:
             raise ValueError("Rollworks API key not configured")
-        
+
         auth_url = f"{self.base_url}/oauth/authorize"
         params = {
             "client_id": self.api_key,
@@ -38,14 +38,14 @@ class RollworksService:
         }
         if state:
             params["state"] = state
-            
+
         return f"{auth_url}?{'&'.join(f'{k}={v}' for k, v in params.items())}"
 
     def exchange_code_for_token(self, code: str, redirect_uri: str) -> Dict[str, Any]:
         """Exchange authorization code for access token"""
         if not self.api_key:
             raise ValueError("Rollworks API key not configured")
-        
+
         try:
             response = requests.post(
                 f"{self.base_url}/oauth/token",
@@ -54,7 +54,8 @@ class RollworksService:
                     "code": code,
                     "redirect_uri": redirect_uri,
                     "client_id": self.api_key
-                }
+                },
+                timeout=30
             )
             response.raise_for_status()
             return response.json()
@@ -67,7 +68,8 @@ class RollworksService:
         try:
             response = requests.get(
                 f"{self.base_url}/me",
-                headers={"Authorization": f"Bearer {access_token}"}
+                headers={"Authorization": f"Bearer {access_token}"},
+                timeout=30
             )
             response.raise_for_status()
             return response.json()
@@ -80,11 +82,12 @@ class RollworksService:
         if not self.api_key:
             logger.warning("Rollworks API key not configured. Returning empty campaigns list.")
             return []
-        
+
         try:
             response = requests.get(
                 f"{self.base_url}/campaigns",
-                headers={"Authorization": f"Bearer {access_token}"}
+                headers={"Authorization": f"Bearer {access_token}"},
+                timeout=30
             )
             response.raise_for_status()
             return response.json().get("data", [])
@@ -97,11 +100,12 @@ class RollworksService:
         if not self.api_key:
             logger.warning("Rollworks API key not configured. Returning empty metrics.")
             return {}
-        
+
         try:
             response = requests.get(
                 f"{self.base_url}/campaigns/{campaign_id}/metrics",
-                headers={"Authorization": f"Bearer {access_token}"}
+                headers={"Authorization": f"Bearer {access_token}"},
+                timeout=30
             )
             response.raise_for_status()
             return response.json()
@@ -113,7 +117,7 @@ class RollworksService:
         """Make an authenticated request to the Rollworks API"""
         if not self.api_key:
             raise ValueError("Rollworks API key not configured")
-            
+
         try:
             response = requests.request(
                 method,
@@ -156,7 +160,7 @@ class RollworksService:
                     "metrics": ",".join(metrics)
                 }
             )
-            
+
             reports = []
             for data in response.get("data", []):
                 try:
@@ -172,7 +176,7 @@ class RollworksService:
                 except Exception as e:
                     logger.error(f"Error parsing report data: {str(e)}")
                     continue
-                    
+
             return reports
         except Exception as e:
             logger.error(f"Error fetching campaign report: {str(e)}")
@@ -210,4 +214,4 @@ class RollworksService:
             return response.get("data", {})
         except Exception as e:
             logger.error(f"Error fetching budget utilization: {str(e)}")
-            return {} 
+            return {}

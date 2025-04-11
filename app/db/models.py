@@ -22,7 +22,7 @@ class User(Base):
     role = Column(String, default="client_manager")  # "admin", "agency_head", or "client_manager"
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    
+
     # Relationships
     clients = relationship("Client", secondary=user_client, back_populates="users")
     reports = relationship("Report", back_populates="user")
@@ -35,12 +35,12 @@ class Client(Base):
     campaign_keywords = Column(String)  # Comma-separated keywords
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    
+
     # Relationships
     users = relationship("User", secondary=user_client, back_populates="clients")
     reports = relationship("Report", back_populates="client")
     campaigns = relationship("Campaign", back_populates="client")
-    
+
     @property
     def campaign_keywords_list(self):
         """Convert comma-separated keywords to a list"""
@@ -58,7 +58,7 @@ class Campaign(Base):
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    
+
     # Relationships
     client = relationship("Client", back_populates="campaigns")
     metrics = relationship("CampaignMetric", back_populates="campaign")
@@ -74,7 +74,7 @@ class CampaignMetric(Base):
     spend = Column(Integer)
     conversions = Column(Integer)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    
+
     # Relationships
     campaign = relationship("Campaign", back_populates="metrics")
 
@@ -86,11 +86,11 @@ class Report(Base):
     content = Column(String)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    
+
     # Foreign keys
     user_id = Column(Integer, ForeignKey("users.id"))
     client_id = Column(Integer, ForeignKey("clients.id"))
-    
+
     # Relationships
     user = relationship("User", back_populates="reports")
-    client = relationship("Client", back_populates="reports") 
+    client = relationship("Client", back_populates="reports")

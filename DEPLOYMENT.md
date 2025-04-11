@@ -1,222 +1,296 @@
 # Deployment Guide
 
-This guide provides instructions for deploying the Marketing Tool to various cloud platforms.
+This guide provides detailed instructions for deploying the Marketing Tool application to Vercel.
 
 ## Table of Contents
 
-- [General Preparation](#general-preparation)
-- [Frontend Deployment](#frontend-deployment)
-  - [Vercel](#vercel-frontend)
-  - [Netlify](#netlify-frontend)
-- [Backend Deployment](#backend-deployment)
-  - [Railway](#railway-backend)
-  - [Render](#render-backend)
-  - [DigitalOcean App Platform](#digitalocean-app-platform)
-- [Database Deployment](#database-deployment)
+- [Current Deployment Status](#current-deployment-status)
+- [Prerequisites](#prerequisites)
+- [Backend Deployment on Vercel](#backend-deployment-on-vercel)
+- [Frontend Deployment on Vercel](#frontend-deployment-on-vercel)
+- [Database Migration](#database-migration)
+- [Environment Variables](#environment-variables)
+- [Troubleshooting](#troubleshooting)
 
-## General Preparation
+## Current Deployment Status
 
-1. **Prepare your repository**
-   - Make sure all your code is committed and pushed to GitHub
-   - Verify that your `.gitignore` includes all files with sensitive information
-   - Check that your application is working locally
+The marketing tool is currently deployed to Vercel with the following setup:
 
-2. **Environment variables**
-   - Identify all environment variables needed for production
-   - Keep a secure record of these values for deployment
+- **Frontend**: https://marketing-tool-frontend.vercel.app
+- **Backend API**: https://marketing-tool-backend.vercel.app
 
-## Frontend Deployment
+Both the frontend and backend are deployed as separate projects from the same Git repository.
 
-### Vercel (Frontend)
+## Prerequisites
 
-Vercel is the preferred platform for deploying the frontend, especially if you're using Next.js.
+Before deploying to Vercel, you need:
 
-1. **Sign up for Vercel**
-   - Go to [vercel.com](https://vercel.com) and sign up or log in
-   - Connect your GitHub account
+1. **GitHub Repository**
+   - The codebase should be pushed to GitHub
+   - Vercel will connect to this repository for deployments
 
-2. **Import your repository**
-   - Click "Add New Project"
-   - Select your repository
-   - Configure the project:
-     - Framework preset: Vite
-     - Root directory: `frontend`
-     - Build command: `npm run build`
-     - Output directory: `dist`
+2. **Vercel Account**
+   - Sign up at [vercel.com](https://vercel.com) if you don't have an account
+   - Connect your GitHub account to Vercel
 
-3. **Configure environment variables**
-   - Add the following environment variables:
-     - `VITE_API_URL`: URL of your deployed backend API (e.g., `https://your-api.railway.app`)
+3. **PostgreSQL Database**
+   - For production, you'll need a PostgreSQL database
+   - Recommended options:
+     - [Neon](https://neon.tech) (Serverless PostgreSQL)
+     - [Supabase](https://supabase.com) (PostgreSQL with additional features)
+     - [Railway](https://railway.app) (Managed PostgreSQL)
 
-4. **Deploy**
-   - Click "Deploy"
-   - Vercel will build and deploy your frontend
+## Backend Deployment on Vercel
 
-### Netlify (Frontend)
+### Step 1: Create a New Vercel Project for the Backend
 
-Netlify is another excellent option for deploying static sites and frontend applications.
+1. **Go to the Vercel Dashboard**
+   - Click on "Add New"
+   - Select "Project"
 
-1. **Sign up for Netlify**
-   - Go to [netlify.com](https://netlify.com) and sign up or log in
-   - Connect your GitHub account
+2. **Import Git Repository**
+   - Select the repository that contains your marketing tool code
+   - Click "Import"
 
-2. **Import your repository**
-   - Click "New site from Git"
-   - Select your repository
-   - Configure the build settings:
-     - Base directory: `frontend`
-     - Build command: `npm run build`
-     - Publish directory: `dist`
+3. **Configure Project Settings**
+   - **Project Name**: "marketing-tool-backend" (or your preferred name)
+   - **Framework Preset**: Select "Other" (since we're using FastAPI)
+   - **Root Directory**: Leave as is (pointing to the root of the repository)
+   - **Build Command**: Leave empty
+   - **Output Directory**: Leave empty
+   - **Install Command**: `pip install -r requirements.txt`
 
-3. **Configure environment variables**
-   - Go to Site settings > Build & deploy > Environment
-   - Add the environment variables as with Vercel
+4. **Set Environment Variables**
+   - Click "Environment Variables"
+   - Add all variables from your `.env` file, including:
+     - `DATABASE_URL`: PostgreSQL connection string (update from SQLite)
+     - `SECRET_KEY`: Your JWT secret key
+     - `ALGORITHM`: JWT algorithm (typically "HS256")
+     - `ACCESS_TOKEN_EXPIRE_MINUTES`: Token expiration time
+     - Any other API keys or credentials needed
 
-4. **Deploy**
-   - Click "Deploy site"
-
-## Backend Deployment
-
-### Railway (Backend)
-
-Railway is a modern platform for deploying applications with minimal configuration.
-
-1. **Sign up for Railway**
-   - Go to [railway.app](https://railway.app) and sign up or log in
-   - Connect your GitHub account
-
-2. **Create a new project**
-   - Click "New Project"
-   - Select "Deploy from GitHub repo"
-   - Select your repository
-
-3. **Configure environment variables**
-   - Add all required environment variables from your `.env.example` file
-   - Make sure to set `PRODUCTION=true`
-   - Update `ALLOWED_ORIGINS` to include your frontend URL
-
-4. **Add a database**
-   - Click "New Service" > "Database" > "PostgreSQL"
-   - Railway will automatically add the `DATABASE_URL` variable to your project
-
-5. **Configure the service**
-   - Root directory: `/`
-   - Start command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-
-### Render (Backend)
-
-Render is a unified platform for deploying both static sites and backend services.
-
-1. **Sign up for Render**
-   - Go to [render.com](https://render.com) and sign up or log in
-   - Connect your GitHub account
-
-2. **Create a new Web Service**
-   - Click "New" > "Web Service"
-   - Select your repository
-   - Configure the service:
-     - Name: `marketing-tool-api`
-     - Environment: Docker
-     - Branch: `main`
-
-3. **Configure environment variables**
-   - Add all required environment variables from your `.env.example` file
-   - Update `ALLOWED_ORIGINS` to include your frontend URL
-
-4. **Add a database**
-   - Click "New" > "PostgreSQL"
-   - Render will provide you with a `DATABASE_URL` to add to your environment variables
-
-### DigitalOcean App Platform
-
-DigitalOcean App Platform is a PaaS solution for deploying applications.
-
-1. **Sign up for DigitalOcean**
-   - Go to [digitalocean.com](https://digitalocean.com) and sign up or log in
-
-2. **Create a new app**
-   - Click "Create" > "Apps"
-   - Connect your GitHub account and select your repository
-
-3. **Configure the app**
-   - Choose the region closest to your users
-   - Select "Dockerfile" as the deployment method
-   - Set environment variables
-
-4. **Add a database**
-   - Add a managed database component to your app
-   - Choose PostgreSQL
-   - DigitalOcean will provide the connection details as environment variables
-
-## Database Deployment
-
-For most cloud platforms mentioned above, you can use their managed database offerings. However, if you need a standalone database:
-
-### Managed PostgreSQL Options
-
-1. **ElephantSQL**
-   - Free tier available
-   - Sign up at [elephantsql.com](https://www.elephantsql.com/)
-   - Create a new instance and get your connection URL
-
-2. **Supabase**
-   - Sign up at [supabase.com](https://supabase.com/)
-   - Create a new project
-   - Get your PostgreSQL connection string from Settings > Database
-
-3. **AWS RDS**
-   - More advanced option with higher scalability
-   - Set up through the AWS Console
-
-## Migrating and Seeding the Database
-
-After deploying the database:
-
-1. **Run migrations**
-   - Connect to your deployed app's shell or run locally with the production DATABASE_URL:
+5. **Verify the vercel.json File**
+   - Ensure your repository has a `vercel.json` file in the root with this content:
+   ```json
+   {
+     "version": 2,
+     "builds": [
+       {
+         "src": "app/main.py",
+         "use": "@vercel/python"
+       }
+     ],
+     "routes": [
+       {
+         "src": "/(.*)",
+         "dest": "app/main.py"
+       }
+     ]
+   }
    ```
+
+6. **Deploy**
+   - Click "Deploy"
+   - Vercel will build and deploy your backend API
+   - Once completed, you'll get a URL for your API
+
+### Step 2: Verify Backend Deployment
+
+1. **Test API Endpoints**
+   - Access `https://your-backend-url.vercel.app/` to see the welcome message
+   - Access `https://your-backend-url.vercel.app/docs` to view the API documentation
+
+2. **Check Database Connection**
+   - Verify that the API can connect to your PostgreSQL database
+   - Test an endpoint that requires database access
+
+## Frontend Deployment on Vercel
+
+### Step 1: Create a New Vercel Project for the Frontend
+
+1. **Go to the Vercel Dashboard**
+   - Click on "Add New"
+   - Select "Project"
+
+2. **Import Git Repository**
+   - Select the same repository used for the backend
+   - Click "Import"
+
+3. **Configure Project Settings**
+   - **Project Name**: "marketing-tool-frontend" (or your preferred name)
+   - **Framework Preset**: Select "Vite"
+   - **Root Directory**: Set to `frontend` 
+   - **Build Command**: `npm run build`
+   - **Output Directory**: `dist`
+   - **Install Command**: `npm install --legacy-peer-deps`
+
+4. **Set Environment Variables**
+   - Click "Environment Variables"
+   - Add the following variables:
+     - `VITE_API_URL`: Your deployed backend URL (e.g., "https://marketing-tool-backend.vercel.app")
+     - `VITE_APP_BASE_URL`: Your frontend URL (will be provided by Vercel)
+
+5. **Verify the vercel.json File**
+   - Ensure your `frontend` directory has a `vercel.json` file with this content:
+   ```json
+   {
+     "framework": "vite",
+     "buildCommand": "npm run build",
+     "outputDirectory": "dist",
+     "installCommand": "npm install --legacy-peer-deps",
+     "rewrites": [
+       { "source": "/api/(.*)", "destination": "https://marketing-tool-backend.vercel.app/api/$1" },
+       { "source": "/(.*)", "destination": "/index.html" }
+     ]
+   }
+   ```
+
+6. **Deploy**
+   - Click "Deploy"
+   - Vercel will build and deploy your frontend application
+   - Once completed, you'll get a URL for your application
+
+### Step 2: Verify Frontend Deployment
+
+1. **Test Application Access**
+   - Access your Vercel-provided URL to ensure the application loads
+   - Try logging in to verify authentication is working
+
+2. **Check API Communication**
+   - Verify that the frontend can communicate with the backend API
+   - Test features that require API requests
+
+## Database Migration
+
+Since Vercel uses serverless functions which don't support persistent file storage, you'll need to migrate from SQLite to PostgreSQL for production:
+
+### Step 1: Set Up PostgreSQL Database
+
+1. **Create a PostgreSQL Database**
+   - Sign up for a cloud PostgreSQL service (Neon, Supabase, Railway, etc.)
+   - Create a new database instance
+   - Get the connection string (format: `postgresql://username:password@hostname:port/database`)
+
+### Step 2: Migrate Data
+
+There are several options for migrating data:
+
+#### Option 1: Use Alembic Migrations
+
+1. **Update DATABASE_URL**
+   - Set your local `.env` file to use the PostgreSQL connection string
+
+2. **Run Migrations**
+   ```bash
    alembic upgrade head
    ```
 
-2. **Seed initial data**
-   - For the first deployment, you may need to seed the database:
+3. **Import Data**
+   - Use the provided scripts to import your existing data:
+   ```bash
+   python export-db.py  # Export data from SQLite
+   # Modify the script to import to PostgreSQL
+   python import-to-postgres.py  # Create this script to import to PostgreSQL
    ```
-   python -m app.db.init_db
+
+#### Option 2: Manual Data Import
+
+1. **Export Data to CSV/JSON**
+   ```bash
+   python export-db.py --format=json
    ```
 
-## Continuous Deployment
+2. **Import Data to PostgreSQL**
+   - Write a script that connects to PostgreSQL and imports the data
+   - Use the SQLAlchemy models to ensure data integrity
 
-The repository includes a GitHub Actions workflow for CI/CD, which:
+### Step 3: Update Backend Configuration
 
-1. Runs tests on both frontend and backend
-2. Builds Docker images
-3. Pushes images to GitHub Container Registry
+1. **Update DATABASE_URL Environment Variable**
+   - In the Vercel project settings for your backend, set `DATABASE_URL` to the PostgreSQL connection string
 
-To use this with your cloud provider:
+2. **Verify Database Connection**
+   - Deploy the backend with the updated environment variable
+   - Test endpoints to ensure the database connection works
 
-1. Set up webhook deployments from GitHub to your cloud provider
-2. Or, configure your cloud provider to pull the latest image from GitHub Container Registry
+## Environment Variables
+
+### Required Backend Environment Variables
+
+| Variable                    | Description                                | Example Value                                          |
+|-----------------------------|--------------------------------------------|--------------------------------------------------------|
+| DATABASE_URL                | PostgreSQL connection string               | postgresql://user:pass@host:port/db                    |
+| SECRET_KEY                  | JWT secret key                             | your-secure-secret-key                                 |
+| ALGORITHM                   | JWT algorithm                              | HS256                                                  |
+| ACCESS_TOKEN_EXPIRE_MINUTES | JWT token expiration time in minutes       | 30                                                     |
+
+### Required Frontend Environment Variables
+
+| Variable          | Description                      | Example Value                                  |
+|-------------------|----------------------------------|------------------------------------------------|
+| VITE_API_URL      | Backend API URL                  | https://marketing-tool-backend.vercel.app      |
+| VITE_APP_BASE_URL | Frontend application URL         | https://marketing-tool-frontend.vercel.app     |
 
 ## Troubleshooting
 
-### Common Issues
+### Common Backend Deployment Issues
 
-1. **CORS errors**
-   - Ensure `ALLOWED_ORIGINS` includes the full URL of your frontend
-   - Check that your API requests include the correct headers
+1. **Database Connection Errors**
+   - Verify the PostgreSQL connection string format
+   - Check that the database server allows connections from Vercel
+   - Ensure the database user has appropriate permissions
 
-2. **Database connection issues**
-   - Verify the DATABASE_URL is correctly formatted
-   - Check if the database server allows connections from your app's IP
+2. **Missing Environment Variables**
+   - Check that all required environment variables are set in Vercel
+   - Verify the values are correct (no typos or formatting issues)
 
-3. **Environment variable problems**
-   - Double-check all environment variables are set correctly
-   - Some platforms require specific formats for multi-line values
+3. **Deployment Build Failures**
+   - Check the build logs in Vercel for specific errors
+   - Ensure all dependencies are listed in `requirements.txt`
+   - Verify that `vercel.json` is formatted correctly
 
-### Getting Help
+### Common Frontend Deployment Issues
 
-If you encounter issues with deployment, please:
+1. **API Connection Issues**
+   - Verify that `VITE_API_URL` points to the correct backend URL
+   - Check that the backend allows CORS from the frontend domain
+   - Look for network errors in the browser console
 
-1. Check the logs in your cloud provider's dashboard
-2. Refer to their documentation for platform-specific guidance
-3. Open an issue in the GitHub repository with detailed information about the problem 
+2. **Build Failures**
+   - Check for TypeScript or ESLint errors in the build logs
+   - Ensure all dependencies are compatible
+   - Use `--legacy-peer-deps` flag if needed for dependency resolution
+
+3. **Routing Issues**
+   - Verify that the `vercel.json` rewrites are configured correctly
+   - Check that client-side routing works properly
+
+## Redeployment Process
+
+### Updating the Backend
+
+1. **Make Changes to the Backend Code**
+   - Update your codebase locally
+   - Test changes locally before pushing
+
+2. **Push Changes to GitHub**
+   - Commit and push changes to your repository
+   - Vercel will automatically detect changes and initiate a new deployment
+
+3. **Verify Deployment**
+   - Check the Vercel dashboard for deployment status
+   - Test the updated API endpoints
+
+### Updating the Frontend
+
+1. **Make Changes to the Frontend Code**
+   - Update your frontend code locally
+   - Test changes locally before pushing
+
+2. **Push Changes to GitHub**
+   - Commit and push changes to your repository
+   - Vercel will automatically detect changes and initiate a new deployment
+
+3. **Verify Deployment**
+   - Check the Vercel dashboard for deployment status
+   - Test the updated frontend application 

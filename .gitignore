@@ -46,6 +46,12 @@ yarn-error.log*
 *.swp
 *.swo
 
+# Chrome Debugging
+launch_chrome_debug.bat
+VSCODE_DEBUGGING.md
+*chrome-debug*
+marketing-tool.code-workspace
+
 # Database
 *.db
 *.sqlite3
@@ -62,6 +68,10 @@ Thumbs.db
 *.pptx
 *.xlsx
 
+# Development tools
+/dev-tools/
+/frontend/public/dev-scripts/
+
 # Virtual Environment
 venv/
 env/
@@ -77,4 +87,4 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 .tox/
-.nox/ 
+.nox/

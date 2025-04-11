@@ -1,26 +1,41 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Container, Box, Typography, Paper, Divider, Button, 
-  TextField, Grid, Card, CardContent, CardHeader, 
-  List, ListItem, ListItemText, ListItemIcon, 
-  Switch, FormControlLabel, Alert, Snackbar,
-  Tabs, Tab, CircularProgress, Chip,
-  Dialog, DialogTitle, DialogContent, DialogActions,
-  LinearProgress, Slider, MenuItem
-} from '@mui/material';
-import { 
-  VpnKey as PasswordIcon, 
-  Save as SaveIcon,
-  Api as ApiIcon, 
-  Check as CheckIcon,
+import {
+  Api as ApiIcon,
   Error as ErrorIcon,
-  LinkedIn as LinkedInIcon,
   Facebook as FacebookIcon,
   Language as GenericApiIcon,
-  Refresh as RefreshIcon
-} from '@mui/icons-material';
-import { useAuth } from '../contexts/AuthContext';
-import axios from 'axios';
+  LinkedIn as LinkedInIcon,
+  VpnKey as PasswordIcon,
+  Save as SaveIcon,
+} from "@mui/icons-material";
+import {
+  Alert,
+  Box,
+  Button,
+  Chip,
+  CircularProgress,
+  Container,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  Grid,
+  LinearProgress,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  MenuItem,
+  Paper,
+  Slider,
+  Snackbar,
+  Tab,
+  Tabs,
+  TextField,
+  Typography,
+} from "@mui/material";
+import React, { useState } from "react";
+import { useAuth } from "../contexts/AuthContext";
 
 // Define types for API status
 interface ApiStatus {
@@ -43,62 +58,68 @@ const SystemSettings: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [tabValue, setTabValue] = useState(0);
   const [passwordForm, setPasswordForm] = useState<PasswordForm>({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: ''
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
   });
   const [notification, setNotification] = useState<{
     open: boolean;
     message: string;
-    severity: 'success' | 'error' | 'warning' | 'info';
+    severity: "success" | "error" | "warning" | "info";
   }>({
     open: false,
-    message: '',
-    severity: 'info'
+    message: "",
+    severity: "info",
   });
 
   // API statuses updated to accurately reflect current state (all in development)
   const [apiStatuses, setApiStatuses] = useState<ApiStatus[]>([
     {
-      name: 'LinkedIn Marketing API',
+      name: "LinkedIn Marketing API",
       connected: false,
-      lastSync: '2025-04-04 16:30:00',
+      lastSync: "2025-04-04 16:30:00",
       icon: <LinkedInIcon />,
-      details: 'Client ID: li_59872af\nEndpoints: Campaigns, Metrics\nStatus: In development (80% complete)\nNote: Campaign API structure implemented, authentication pending'
+      details:
+        "Client ID: li_59872af\nEndpoints: Campaigns, Metrics\nStatus: In development (80% complete)\nNote: Campaign API structure implemented, authentication pending",
     },
     {
-      name: 'Google Analytics',
+      name: "Google Analytics",
       connected: false,
-      lastSync: '2025-04-04 17:15:00',
+      lastSync: "2025-04-04 17:15:00",
       icon: <GenericApiIcon />,
-      details: 'Property ID: GA-43928571\nConnected Views: Pending\nStatus: In development (65% complete)\nMetrics: Sessions, Users, Pageviews, Conversions'
+      details:
+        "Property ID: GA-43928571\nConnected Views: Pending\nStatus: In development (65% complete)\nMetrics: Sessions, Users, Pageviews, Conversions",
     },
     {
-      name: 'Facebook Ads API',
+      name: "Facebook Ads API",
       connected: false,
       icon: <FacebookIcon />,
-      details: 'Status: In development (40% complete)\nMissing: Authentication token\nNote: Basic structure implemented, awaiting access credentials'
+      details:
+        "Status: In development (40% complete)\nMissing: Authentication token\nNote: Basic structure implemented, awaiting access credentials",
     },
     {
-      name: 'Google Ads API',
+      name: "Google Ads API",
       connected: false,
       lastSync: undefined,
       icon: <GenericApiIcon />,
-      details: 'Client ID: Pending\nStatus: In development (50% complete)\nNote: API structure defined, authentication flow in progress'
+      details:
+        "Client ID: Pending\nStatus: In development (50% complete)\nNote: API structure defined, authentication flow in progress",
     },
     {
-      name: 'Twitter Ads API',
+      name: "Twitter Ads API",
       connected: false,
       icon: <GenericApiIcon />,
-      details: 'Status: Development in progress (30% complete)\nPlanned completion: Q2 2025\nFeatures being developed: Campaign metrics, Audience insights'
+      details:
+        "Status: Development in progress (30% complete)\nPlanned completion: Q2 2025\nFeatures being developed: Campaign metrics, Audience insights",
     },
     {
-      name: 'HubSpot API',
+      name: "HubSpot API",
       connected: false,
       lastSync: undefined,
       icon: <GenericApiIcon />,
-      details: 'API Key: Pending\nConnected portals: 0\nStatus: In development (25% complete)\nNote: Initial integration started'
-    }
+      details:
+        "API Key: Pending\nConnected portals: 0\nStatus: In development (25% complete)\nNote: Initial integration started",
+    },
   ]);
 
   // Planned integrations state with more details
@@ -108,22 +129,22 @@ const SystemSettings: React.FC = () => {
       plannedDate: "Q3 2025",
       description: "Campaign metrics and creative assets",
       priority: "Medium",
-      status: "Planned"
+      status: "Planned",
     },
     {
       name: "Reddit Ads API",
       plannedDate: "Q4 2025",
       description: "Basic metrics integration",
       priority: "Low",
-      status: "Planned"
+      status: "Planned",
     },
     {
       name: "Bing Ads API",
       plannedDate: "Q2 2025",
       description: "Campaign performance metrics",
       priority: "Medium",
-      status: "Under review"
-    }
+      status: "Under review",
+    },
   ]);
 
   // State for editing planned integrations
@@ -131,7 +152,7 @@ const SystemSettings: React.FC = () => {
     index: number;
     integration: any;
   } | null>(null);
-  
+
   // State for progress update dialog
   const [progressUpdateOpen, setProgressUpdateOpen] = useState(false);
   const [progressUpdateData, setProgressUpdateData] = useState<{
@@ -139,9 +160,9 @@ const SystemSettings: React.FC = () => {
     currentProgress: number;
     notes: string;
   }>({
-    apiName: '',
+    apiName: "",
     currentProgress: 0,
-    notes: ''
+    notes: "",
   });
 
   const [selectedApi, setSelectedApi] = useState<ApiStatus | null>(null);
@@ -166,7 +187,7 @@ const SystemSettings: React.FC = () => {
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPasswordForm({
       ...passwordForm,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
   };
 
@@ -179,8 +200,8 @@ const SystemSettings: React.FC = () => {
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
       setNotification({
         open: true,
-        message: 'New password and confirmation do not match',
-        severity: 'error'
+        message: "New password and confirmation do not match",
+        severity: "error",
       });
       setLoading(false);
       return;
@@ -191,14 +212,14 @@ const SystemSettings: React.FC = () => {
       setLoading(false);
       setNotification({
         open: true,
-        message: 'Password updated successfully',
-        severity: 'success'
+        message: "Password updated successfully",
+        severity: "success",
       });
       // Reset form
       setPasswordForm({
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: ''
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
       });
     }, 1000);
   };
@@ -207,7 +228,7 @@ const SystemSettings: React.FC = () => {
   const handleEditPlannedIntegration = (index: number) => {
     setEditingIntegration({
       index,
-      integration: { ...plannedIntegrations[index] }
+      integration: { ...plannedIntegrations[index] },
     });
   };
 
@@ -219,28 +240,28 @@ const SystemSettings: React.FC = () => {
   // Handle saving the edited planned integration
   const handleSavePlannedIntegration = () => {
     if (!editingIntegration) return;
-    
+
     const newIntegrations = [...plannedIntegrations];
     newIntegrations[editingIntegration.index] = editingIntegration.integration;
     setPlannedIntegrations(newIntegrations);
     setEditingIntegration(null);
     setNotification({
       open: true,
-      message: 'Integration plan updated successfully',
-      severity: 'success'
+      message: "Integration plan updated successfully",
+      severity: "success",
     });
   };
 
   // Handle opening the progress update dialog
   const handleOpenProgressUpdate = (apiName: string) => {
-    const api = apiStatuses.find(api => api.name === apiName);
+    const api = apiStatuses.find((api) => api.name === apiName);
     const progressMatch = api?.details?.match(/\((\d+)% complete\)/);
     const currentProgress = progressMatch ? parseInt(progressMatch[1]) : 0;
-    
+
     setProgressUpdateData({
       apiName,
       currentProgress,
-      notes: ''
+      notes: "",
     });
     setProgressUpdateOpen(true);
   };
@@ -252,44 +273,46 @@ const SystemSettings: React.FC = () => {
 
   // Handle saving the progress update
   const handleSaveProgressUpdate = () => {
-    const updatedStatuses = apiStatuses.map(api => {
+    const updatedStatuses = apiStatuses.map((api) => {
       if (api.name === progressUpdateData.apiName) {
         // Update the progress percentage in the details
         const updatedDetails = api.details?.replace(
-          /\(\d+% complete\)/, 
+          /\(\d+% complete\)/,
           `(${progressUpdateData.currentProgress}% complete)`
         );
-        
+
         // Append the notes to the details if provided
-        const finalDetails = progressUpdateData.notes 
-          ? `${updatedDetails}\nUpdate note: ${progressUpdateData.notes}` 
+        const finalDetails = progressUpdateData.notes
+          ? `${updatedDetails}\nUpdate note: ${progressUpdateData.notes}`
           : updatedDetails;
-        
+
         return {
           ...api,
           details: finalDetails,
           // If progress reaches 100%, mark as connected
-          connected: progressUpdateData.currentProgress === 100
+          connected: progressUpdateData.currentProgress === 100,
         };
       }
       return api;
     });
-    
+
     setApiStatuses(updatedStatuses);
     setProgressUpdateOpen(false);
     setNotification({
       open: true,
       message: `Progress updated for ${progressUpdateData.apiName}`,
-      severity: 'success'
+      severity: "success",
     });
   };
 
   // Handle form change for progress update
-  const handleProgressUpdateChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleProgressUpdateChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
     setProgressUpdateData({
       ...progressUpdateData,
-      [name]: name === 'currentProgress' ? parseInt(value) : value
+      [name]: name === "currentProgress" ? parseInt(value) : value,
     });
   };
 
@@ -300,13 +323,13 @@ const SystemSettings: React.FC = () => {
       plannedDate: "Q4 2025",
       description: "Description pending",
       priority: "Medium",
-      status: "Planned"
+      status: "Planned",
     };
-    
+
     setPlannedIntegrations([...plannedIntegrations, newIntegration]);
     setEditingIntegration({
       index: plannedIntegrations.length,
-      integration: newIntegration
+      integration: newIntegration,
     });
   };
 
@@ -315,12 +338,12 @@ const SystemSettings: React.FC = () => {
     setLoading(true);
     // In a real application, this would make an API call to refresh the connection
     setTimeout(() => {
-      const updatedStatuses = apiStatuses.map(api => {
+      const updatedStatuses = apiStatuses.map((api) => {
         if (api.name === apiName) {
           return {
             ...api,
             lastSync: new Date().toLocaleString(),
-            connected: true
+            connected: true,
           };
         }
         return api;
@@ -330,7 +353,7 @@ const SystemSettings: React.FC = () => {
       setNotification({
         open: true,
         message: `${apiName} connection refreshed successfully`,
-        severity: 'success'
+        severity: "success",
       });
     }, 1500);
   };
@@ -348,7 +371,7 @@ const SystemSettings: React.FC = () => {
         <Typography variant="h6">Password Management</Typography>
       </Box>
       <Divider sx={{ mb: 3 }} />
-      
+
       <form onSubmit={handlePasswordUpdate}>
         <Grid container spacing={3}>
           <Grid item xs={12}>
@@ -385,14 +408,14 @@ const SystemSettings: React.FC = () => {
             />
           </Grid>
           <Grid item xs={12}>
-            <Button 
+            <Button
               type="submit"
-              variant="contained" 
+              variant="contained"
               color="primary"
               startIcon={<SaveIcon />}
               disabled={loading}
             >
-              {loading ? <CircularProgress size={24} /> : 'Update Password'}
+              {loading ? <CircularProgress size={24} /> : "Update Password"}
             </Button>
           </Grid>
         </Grid>
@@ -409,49 +432,53 @@ const SystemSettings: React.FC = () => {
           <Typography variant="h6">API Connections</Typography>
         </Box>
         <Divider sx={{ mb: 3 }} />
-        
+
         <Box mb={2}>
           <Typography variant="subtitle2" color="text.secondary">
-            All API integrations are currently in development. None are fully operational at this time.
+            All API integrations are currently in development. None are fully
+            operational at this time.
           </Typography>
         </Box>
-        
+
         <List>
           {apiStatuses.map((api, index) => (
-            <ListItem 
-              key={index} 
+            <ListItem
+              key={index}
               divider={index < apiStatuses.length - 1}
               button
               onClick={() => handleOpenApiDetails(api)}
-              sx={{ 
+              sx={{
                 py: 2,
-                '&:hover': {
-                  backgroundColor: 'rgba(0, 0, 0, 0.04)'
-                }
+                "&:hover": {
+                  backgroundColor: "rgba(0, 0, 0, 0.04)",
+                },
               }}
             >
-              <ListItemIcon>
-                {api.icon}
-              </ListItemIcon>
-              <ListItemText 
+              <ListItemIcon>{api.icon}</ListItemIcon>
+              <ListItemText
                 primary={
                   <Box display="flex" alignItems="center">
                     {api.name}
-                    <Chip 
-                      size="small" 
-                      label="In Development" 
-                      color="warning" 
-                      sx={{ ml: 1 }} 
+                    <Chip
+                      size="small"
+                      label="In Development"
+                      color="warning"
+                      sx={{ ml: 1 }}
                     />
                   </Box>
                 }
                 secondary={
-                  api.details?.includes('progress') 
-                    ? `Development: ${api.details.split('\n').find(line => line.includes('% complete')) || 'In progress'}` 
-                    : 'Not started'
+                  api.details?.includes("progress")
+                    ? `Development: ${
+                        api.details
+                          .split("\n")
+                          .find((line) => line.includes("% complete")) ||
+                        "In progress"
+                      }`
+                    : "Not started"
                 }
               />
-              <Chip 
+              <Chip
                 icon={<ErrorIcon />}
                 label="Inactive"
                 color="error"
@@ -475,14 +502,19 @@ const SystemSettings: React.FC = () => {
       </Paper>
 
       <Paper elevation={2} sx={{ p: 3, mb: 3 }}>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+        <Box
+          display="flex"
+          justifyContent="space-between"
+          alignItems="center"
+          mb={2}
+        >
           <Box display="flex" alignItems="center">
             <ApiIcon color="primary" sx={{ mr: 1 }} />
             <Typography variant="h6">Integration Roadmap</Typography>
           </Box>
-          <Button 
-            variant="contained" 
-            color="primary" 
+          <Button
+            variant="contained"
+            color="primary"
             size="small"
             onClick={handleAddPlannedIntegration}
           >
@@ -490,18 +522,18 @@ const SystemSettings: React.FC = () => {
           </Button>
         </Box>
         <Divider sx={{ mb: 3 }} />
-        
+
         <Typography variant="body2" paragraph>
           The following API integrations are planned for future development:
         </Typography>
-        
+
         <List dense>
           {plannedIntegrations.map((integration, index) => (
             <ListItem
               key={index}
               secondaryAction={
-                <Button 
-                  size="small" 
+                <Button
+                  size="small"
                   onClick={() => handleEditPlannedIntegration(index)}
                   variant="outlined"
                 >
@@ -512,27 +544,29 @@ const SystemSettings: React.FC = () => {
               <ListItemIcon>
                 <GenericApiIcon fontSize="small" />
               </ListItemIcon>
-              <ListItemText 
-                primary={integration.name} 
+              <ListItemText
+                primary={integration.name}
                 secondary={
                   <>
                     {`${integration.plannedDate} - ${integration.description}`}
-                    <Box mt={0.5}>
-                      <Chip 
-                        label={integration.status} 
-                        color={integration.status === "Planned" ? "info" : "warning"} 
-                        size="small" 
-                        variant="outlined" 
+                    <div style={{ marginTop: "4px" }}>
+                      <Chip
+                        label={integration.status}
+                        color={
+                          integration.status === "Planned" ? "info" : "warning"
+                        }
+                        size="small"
+                        variant="outlined"
                       />
-                      <Chip 
-                        label={`Priority: ${integration.priority}`} 
-                        size="small" 
-                        variant="outlined" 
-                        sx={{ ml: 1 }} 
+                      <Chip
+                        label={`Priority: ${integration.priority}`}
+                        size="small"
+                        variant="outlined"
+                        sx={{ ml: 1 }}
                       />
-                    </Box>
+                    </div>
                   </>
-                } 
+                }
               />
             </ListItem>
           ))}
@@ -540,8 +574,8 @@ const SystemSettings: React.FC = () => {
       </Paper>
 
       {/* Dialog for editing planned integrations */}
-      <Dialog 
-        open={editingIntegration !== null} 
+      <Dialog
+        open={editingIntegration !== null}
         onClose={handleCloseEditIntegration}
         maxWidth="sm"
         fullWidth
@@ -556,13 +590,15 @@ const SystemSettings: React.FC = () => {
                     fullWidth
                     label="API Name"
                     value={editingIntegration.integration.name}
-                    onChange={(e) => setEditingIntegration({
-                      ...editingIntegration,
-                      integration: {
-                        ...editingIntegration.integration,
-                        name: e.target.value
-                      }
-                    })}
+                    onChange={(e) =>
+                      setEditingIntegration({
+                        ...editingIntegration,
+                        integration: {
+                          ...editingIntegration.integration,
+                          name: e.target.value,
+                        },
+                      })
+                    }
                     margin="normal"
                   />
                 </Grid>
@@ -571,13 +607,15 @@ const SystemSettings: React.FC = () => {
                     fullWidth
                     label="Planned Date"
                     value={editingIntegration.integration.plannedDate}
-                    onChange={(e) => setEditingIntegration({
-                      ...editingIntegration,
-                      integration: {
-                        ...editingIntegration.integration,
-                        plannedDate: e.target.value
-                      }
-                    })}
+                    onChange={(e) =>
+                      setEditingIntegration({
+                        ...editingIntegration,
+                        integration: {
+                          ...editingIntegration.integration,
+                          plannedDate: e.target.value,
+                        },
+                      })
+                    }
                     margin="normal"
                     placeholder="e.g., Q2 2025"
                   />
@@ -588,13 +626,15 @@ const SystemSettings: React.FC = () => {
                     fullWidth
                     label="Priority"
                     value={editingIntegration.integration.priority}
-                    onChange={(e) => setEditingIntegration({
-                      ...editingIntegration,
-                      integration: {
-                        ...editingIntegration.integration,
-                        priority: e.target.value
-                      }
-                    })}
+                    onChange={(e) =>
+                      setEditingIntegration({
+                        ...editingIntegration,
+                        integration: {
+                          ...editingIntegration.integration,
+                          priority: e.target.value,
+                        },
+                      })
+                    }
                     margin="normal"
                   >
                     <MenuItem value="High">High</MenuItem>
@@ -608,13 +648,15 @@ const SystemSettings: React.FC = () => {
                     fullWidth
                     label="Status"
                     value={editingIntegration.integration.status}
-                    onChange={(e) => setEditingIntegration({
-                      ...editingIntegration,
-                      integration: {
-                        ...editingIntegration.integration,
-                        status: e.target.value
-                      }
-                    })}
+                    onChange={(e) =>
+                      setEditingIntegration({
+                        ...editingIntegration,
+                        integration: {
+                          ...editingIntegration.integration,
+                          status: e.target.value,
+                        },
+                      })
+                    }
                     margin="normal"
                   >
                     <MenuItem value="Planned">Planned</MenuItem>
@@ -628,13 +670,15 @@ const SystemSettings: React.FC = () => {
                     fullWidth
                     label="Description"
                     value={editingIntegration.integration.description}
-                    onChange={(e) => setEditingIntegration({
-                      ...editingIntegration,
-                      integration: {
-                        ...editingIntegration.integration,
-                        description: e.target.value
-                      }
-                    })}
+                    onChange={(e) =>
+                      setEditingIntegration({
+                        ...editingIntegration,
+                        integration: {
+                          ...editingIntegration.integration,
+                          description: e.target.value,
+                        },
+                      })
+                    }
                     margin="normal"
                     multiline
                     rows={2}
@@ -644,9 +688,9 @@ const SystemSettings: React.FC = () => {
             </DialogContent>
             <DialogActions>
               <Button onClick={handleCloseEditIntegration}>Cancel</Button>
-              <Button 
-                onClick={handleSavePlannedIntegration} 
-                variant="contained" 
+              <Button
+                onClick={handleSavePlannedIntegration}
+                variant="contained"
                 color="primary"
               >
                 Save Changes
@@ -668,7 +712,7 @@ const SystemSettings: React.FC = () => {
           <Typography variant="subtitle1" gutterBottom>
             {progressUpdateData.apiName}
           </Typography>
-          
+
           <Box sx={{ mt: 3, mb: 2 }}>
             <Typography variant="body2" gutterBottom>
               Current Progress: {progressUpdateData.currentProgress}%
@@ -676,10 +720,12 @@ const SystemSettings: React.FC = () => {
             <Slider
               name="currentProgress"
               value={progressUpdateData.currentProgress}
-              onChange={(e, value) => setProgressUpdateData({
-                ...progressUpdateData,
-                currentProgress: value as number
-              })}
+              onChange={(e, value) =>
+                setProgressUpdateData({
+                  ...progressUpdateData,
+                  currentProgress: value as number,
+                })
+              }
               valueLabelDisplay="auto"
               step={5}
               marks
@@ -687,7 +733,7 @@ const SystemSettings: React.FC = () => {
               max={100}
             />
           </Box>
-          
+
           <TextField
             name="notes"
             label="Progress Notes"
@@ -699,18 +745,19 @@ const SystemSettings: React.FC = () => {
             placeholder="Describe what has been accomplished and what remains to be done"
             margin="normal"
           />
-          
+
           <Box mt={2}>
             <Typography variant="caption" color="text.secondary">
-              Note: Setting progress to 100% will automatically mark this API as active
+              Note: Setting progress to 100% will automatically mark this API as
+              active
             </Typography>
           </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseProgressUpdate}>Cancel</Button>
-          <Button 
-            onClick={handleSaveProgressUpdate} 
-            variant="contained" 
+          <Button
+            onClick={handleSaveProgressUpdate}
+            variant="contained"
             color="primary"
           >
             Update Progress
@@ -718,7 +765,12 @@ const SystemSettings: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={apiDetailsOpen} onClose={handleCloseApiDetails} maxWidth="sm" fullWidth>
+      <Dialog
+        open={apiDetailsOpen}
+        onClose={handleCloseApiDetails}
+        maxWidth="sm"
+        fullWidth
+      >
         {selectedApi && (
           <>
             <DialogTitle>
@@ -727,7 +779,7 @@ const SystemSettings: React.FC = () => {
                 <Typography variant="h6" sx={{ ml: 1 }}>
                   {selectedApi.name}
                 </Typography>
-                <Chip 
+                <Chip
                   icon={<ErrorIcon />}
                   label="In Development"
                   color="warning"
@@ -739,119 +791,295 @@ const SystemSettings: React.FC = () => {
             <DialogContent dividers>
               <Grid container spacing={2}>
                 <Grid item xs={12}>
-                  <Typography variant="subtitle1" fontWeight="bold" gutterBottom>Status</Typography>
-                  <Box sx={{ 
-                    p: 1.5, 
-                    borderRadius: 1, 
-                    bgcolor: 'warning.lightest',
-                    border: 1,
-                    borderColor: 'warning.light'
-                  }}>
+                  <Typography
+                    variant="subtitle1"
+                    fontWeight="bold"
+                    gutterBottom
+                  >
+                    Status
+                  </Typography>
+                  <Box
+                    sx={{
+                      p: 1.5,
+                      borderRadius: 1,
+                      bgcolor: "warning.lightest",
+                      border: 1,
+                      borderColor: "warning.light",
+                    }}
+                  >
                     <Typography>
-                      This API integration is in development and not yet available for use.
+                      This API integration is in development and not yet
+                      available for use.
                     </Typography>
                   </Box>
                 </Grid>
-                
+
                 <Grid item xs={12}>
-                  <Typography variant="subtitle1" fontWeight="bold" gutterBottom>Implementation Progress</Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Box sx={{ width: '100%', mr: 1 }}>
-                      <LinearProgress 
-                        variant="determinate" 
-                        value={selectedApi.details?.includes('(80%') ? 80 :
-                               selectedApi.details?.includes('(65%') ? 65 :
-                               selectedApi.details?.includes('(50%') ? 50 :
-                               selectedApi.details?.includes('(40%') ? 40 :
-                               selectedApi.details?.includes('(30%') ? 30 :
-                               selectedApi.details?.includes('(25%') ? 25 : 20} 
+                  <Typography
+                    variant="subtitle1"
+                    fontWeight="bold"
+                    gutterBottom
+                  >
+                    Implementation Progress
+                  </Typography>
+                  <Box sx={{ display: "flex", alignItems: "center" }}>
+                    <Box sx={{ width: "100%", mr: 1 }}>
+                      <LinearProgress
+                        variant="determinate"
+                        value={
+                          selectedApi.details?.includes("(80%")
+                            ? 80
+                            : selectedApi.details?.includes("(65%")
+                            ? 65
+                            : selectedApi.details?.includes("(50%")
+                            ? 50
+                            : selectedApi.details?.includes("(40%")
+                            ? 40
+                            : selectedApi.details?.includes("(30%")
+                            ? 30
+                            : selectedApi.details?.includes("(25%")
+                            ? 25
+                            : 20
+                        }
                         color="warning"
                       />
                     </Box>
                     <Typography variant="body2" color="text.secondary">
-                      {selectedApi.details?.includes('(80%') ? '80%' :
-                       selectedApi.details?.includes('(65%') ? '65%' :
-                       selectedApi.details?.includes('(50%') ? '50%' :
-                       selectedApi.details?.includes('(40%') ? '40%' :
-                       selectedApi.details?.includes('(30%') ? '30%' :
-                       selectedApi.details?.includes('(25%') ? '25%' : '20%'}
+                      {selectedApi.details?.includes("(80%")
+                        ? "80%"
+                        : selectedApi.details?.includes("(65%")
+                        ? "65%"
+                        : selectedApi.details?.includes("(50%")
+                        ? "50%"
+                        : selectedApi.details?.includes("(40%")
+                        ? "40%"
+                        : selectedApi.details?.includes("(30%")
+                        ? "30%"
+                        : selectedApi.details?.includes("(25%")
+                        ? "25%"
+                        : "20%"}
                     </Typography>
                   </Box>
                 </Grid>
-                
+
                 <Grid item xs={12}>
-                  <Typography variant="subtitle1" fontWeight="bold" gutterBottom>Development Details</Typography>
-                  {selectedApi.details?.split('\n').map((detail, idx) => (
-                    <Typography key={idx} variant="body2" paragraph={false} sx={{ mb: 0.5 }}>
+                  <Typography
+                    variant="subtitle1"
+                    fontWeight="bold"
+                    gutterBottom
+                  >
+                    Development Details
+                  </Typography>
+                  {selectedApi.details?.split("\n").map((detail, idx) => (
+                    <Typography
+                      key={idx}
+                      variant="body2"
+                      paragraph={false}
+                      sx={{ mb: 0.5 }}
+                    >
                       {detail}
                     </Typography>
                   ))}
                 </Grid>
-                
+
                 <Grid item xs={12}>
-                  <Typography variant="subtitle1" fontWeight="bold" gutterBottom>Planned Features</Typography>
+                  <Typography
+                    variant="subtitle1"
+                    fontWeight="bold"
+                    gutterBottom
+                  >
+                    Planned Features
+                  </Typography>
                   <Box component="ul" sx={{ pl: 2, mt: 0 }}>
-                    {selectedApi.name === 'LinkedIn Marketing API' && (
+                    {selectedApi.name === "LinkedIn Marketing API" && (
                       <>
-                        <Typography component="li" sx={{ color: 'text.disabled' }}>Campaign metrics retrieval (in development)</Typography>
-                        <Typography component="li" sx={{ color: 'text.disabled' }}>Profile information (in development)</Typography>
-                        <Typography component="li" sx={{ color: 'text.disabled' }}>Ad performance data (planned)</Typography>
+                        <Typography
+                          component="li"
+                          sx={{ color: "text.disabled" }}
+                        >
+                          Campaign metrics retrieval (in development)
+                        </Typography>
+                        <Typography
+                          component="li"
+                          sx={{ color: "text.disabled" }}
+                        >
+                          Profile information (in development)
+                        </Typography>
+                        <Typography
+                          component="li"
+                          sx={{ color: "text.disabled" }}
+                        >
+                          Ad performance data (planned)
+                        </Typography>
                       </>
                     )}
-                    {selectedApi.name === 'Google Analytics' && (
+                    {selectedApi.name === "Google Analytics" && (
                       <>
-                        <Typography component="li" sx={{ color: 'text.disabled' }}>User metrics and demographics (in development)</Typography>
-                        <Typography component="li" sx={{ color: 'text.disabled' }}>Page performance data (in development)</Typography>
-                        <Typography component="li" sx={{ color: 'text.disabled' }}>Conversion tracking (planned)</Typography>
-                        <Typography component="li" sx={{ color: 'text.disabled' }}>Custom event tracking (planned)</Typography>
+                        <Typography
+                          component="li"
+                          sx={{ color: "text.disabled" }}
+                        >
+                          User metrics and demographics (in development)
+                        </Typography>
+                        <Typography
+                          component="li"
+                          sx={{ color: "text.disabled" }}
+                        >
+                          Page performance data (in development)
+                        </Typography>
+                        <Typography
+                          component="li"
+                          sx={{ color: "text.disabled" }}
+                        >
+                          Conversion tracking (planned)
+                        </Typography>
+                        <Typography
+                          component="li"
+                          sx={{ color: "text.disabled" }}
+                        >
+                          Custom event tracking (planned)
+                        </Typography>
                       </>
                     )}
-                    {selectedApi.name === 'Facebook Ads API' && (
+                    {selectedApi.name === "Facebook Ads API" && (
                       <>
-                        <Typography component="li" sx={{ color: 'text.disabled' }}>Campaign metrics (in development)</Typography>
-                        <Typography component="li" sx={{ color: 'text.disabled' }}>Ad creative analysis (planned)</Typography>
-                        <Typography component="li" sx={{ color: 'text.disabled' }}>Audience insights (planned)</Typography>
+                        <Typography
+                          component="li"
+                          sx={{ color: "text.disabled" }}
+                        >
+                          Campaign metrics (in development)
+                        </Typography>
+                        <Typography
+                          component="li"
+                          sx={{ color: "text.disabled" }}
+                        >
+                          Ad creative analysis (planned)
+                        </Typography>
+                        <Typography
+                          component="li"
+                          sx={{ color: "text.disabled" }}
+                        >
+                          Audience insights (planned)
+                        </Typography>
                       </>
                     )}
-                    {selectedApi.name === 'Google Ads API' && (
+                    {selectedApi.name === "Google Ads API" && (
                       <>
-                        <Typography component="li" sx={{ color: 'text.disabled' }}>Search campaign metrics (in development)</Typography>
-                        <Typography component="li" sx={{ color: 'text.disabled' }}>Display campaign metrics (in development)</Typography>
-                        <Typography component="li" sx={{ color: 'text.disabled' }}>Campaign creation (planned)</Typography>
+                        <Typography
+                          component="li"
+                          sx={{ color: "text.disabled" }}
+                        >
+                          Search campaign metrics (in development)
+                        </Typography>
+                        <Typography
+                          component="li"
+                          sx={{ color: "text.disabled" }}
+                        >
+                          Display campaign metrics (in development)
+                        </Typography>
+                        <Typography
+                          component="li"
+                          sx={{ color: "text.disabled" }}
+                        >
+                          Campaign creation (planned)
+                        </Typography>
                       </>
                     )}
-                    {selectedApi.name === 'Twitter Ads API' && (
+                    {selectedApi.name === "Twitter Ads API" && (
                       <>
-                        <Typography component="li" sx={{ color: 'text.disabled' }}>Campaign metrics (in development)</Typography>
-                        <Typography component="li" sx={{ color: 'text.disabled' }}>Audience insights (planned)</Typography>
-                        <Typography component="li" sx={{ color: 'text.disabled' }}>Tweet performance (planned)</Typography>
+                        <Typography
+                          component="li"
+                          sx={{ color: "text.disabled" }}
+                        >
+                          Campaign metrics (in development)
+                        </Typography>
+                        <Typography
+                          component="li"
+                          sx={{ color: "text.disabled" }}
+                        >
+                          Audience insights (planned)
+                        </Typography>
+                        <Typography
+                          component="li"
+                          sx={{ color: "text.disabled" }}
+                        >
+                          Tweet performance (planned)
+                        </Typography>
                       </>
                     )}
-                    {selectedApi.name === 'HubSpot API' && (
+                    {selectedApi.name === "HubSpot API" && (
                       <>
-                        <Typography component="li" sx={{ color: 'text.disabled' }}>Contact retrieval (in development)</Typography>
-                        <Typography component="li" sx={{ color: 'text.disabled' }}>Deal information (planned)</Typography>
-                        <Typography component="li" sx={{ color: 'text.disabled' }}>Contact creation (planned)</Typography>
-                        <Typography component="li" sx={{ color: 'text.disabled' }}>Deal management (planned)</Typography>
+                        <Typography
+                          component="li"
+                          sx={{ color: "text.disabled" }}
+                        >
+                          Contact retrieval (in development)
+                        </Typography>
+                        <Typography
+                          component="li"
+                          sx={{ color: "text.disabled" }}
+                        >
+                          Deal information (planned)
+                        </Typography>
+                        <Typography
+                          component="li"
+                          sx={{ color: "text.disabled" }}
+                        >
+                          Contact creation (planned)
+                        </Typography>
+                        <Typography
+                          component="li"
+                          sx={{ color: "text.disabled" }}
+                        >
+                          Deal management (planned)
+                        </Typography>
                       </>
                     )}
                   </Box>
                 </Grid>
-                
+
                 <Grid item xs={12}>
-                  <Typography variant="subtitle1" fontWeight="bold" gutterBottom>Development Timeline</Typography>
+                  <Typography
+                    variant="subtitle1"
+                    fontWeight="bold"
+                    gutterBottom
+                  >
+                    Development Timeline
+                  </Typography>
                   <Box component="ul" sx={{ pl: 2, mt: 0 }}>
-                    <Typography component="li">Initial Setup: Completed</Typography>
-                    <Typography component="li">API Structure: {selectedApi.details?.includes('(50%') || selectedApi.details?.includes('(65%') || selectedApi.details?.includes('(80%') ? 'Completed' : 'In Progress'}</Typography>
-                    <Typography component="li">Authentication Flow: {selectedApi.details?.includes('(65%') || selectedApi.details?.includes('(80%') ? 'Completed' : 'In Progress'}</Typography>
-                    <Typography component="li">Data Retrieval: {selectedApi.details?.includes('(80%') ? 'In Testing' : 'Pending'}</Typography>
-                    <Typography component="li">Production Deployment: Pending</Typography>
+                    <Typography component="li">
+                      Initial Setup: Completed
+                    </Typography>
+                    <Typography component="li">
+                      API Structure:{" "}
+                      {selectedApi.details?.includes("(50%") ||
+                      selectedApi.details?.includes("(65%") ||
+                      selectedApi.details?.includes("(80%")
+                        ? "Completed"
+                        : "In Progress"}
+                    </Typography>
+                    <Typography component="li">
+                      Authentication Flow:{" "}
+                      {selectedApi.details?.includes("(65%") ||
+                      selectedApi.details?.includes("(80%")
+                        ? "Completed"
+                        : "In Progress"}
+                    </Typography>
+                    <Typography component="li">
+                      Data Retrieval:{" "}
+                      {selectedApi.details?.includes("(80%")
+                        ? "In Testing"
+                        : "Pending"}
+                    </Typography>
+                    <Typography component="li">
+                      Production Deployment: Pending
+                    </Typography>
                   </Box>
                 </Grid>
               </Grid>
             </DialogContent>
             <DialogActions>
-              <Box sx={{ mr: 'auto', ml: 2, my: 1 }}>
+              <Box sx={{ mr: "auto", ml: 2, my: 1 }}>
                 <Button
                   color="primary"
                   onClick={() => handleOpenProgressUpdate(selectedApi.name)}
@@ -875,18 +1103,18 @@ const SystemSettings: React.FC = () => {
           System Settings
         </Typography>
         <Typography variant="subtitle1" color="text.secondary">
-          {user?.role === 'admin' 
-            ? 'Manage system-wide settings and API connections' 
-            : 'Manage your account settings'}
+          {user?.role === "admin"
+            ? "Manage system-wide settings and API connections"
+            : "Manage your account settings"}
         </Typography>
       </Box>
 
-      {user?.role === 'admin' ? (
+      {user?.role === "admin" ? (
         // Admin view with tabs
         <>
-          <Tabs 
-            value={tabValue} 
-            onChange={handleTabChange} 
+          <Tabs
+            value={tabValue}
+            onChange={handleTabChange}
             sx={{ mb: 3 }}
             indicatorColor="primary"
             textColor="primary"
@@ -894,7 +1122,7 @@ const SystemSettings: React.FC = () => {
             <Tab label="API Connections" />
             <Tab label="Account Settings" />
           </Tabs>
-          
+
           {tabValue === 0 && renderApiManagementSection()}
           {tabValue === 1 && renderPasswordSection()}
         </>
@@ -903,13 +1131,13 @@ const SystemSettings: React.FC = () => {
         renderPasswordSection()
       )}
 
-      <Snackbar 
-        open={notification.open} 
-        autoHideDuration={6000} 
+      <Snackbar
+        open={notification.open}
+        autoHideDuration={6000}
         onClose={handleCloseNotification}
       >
-        <Alert 
-          onClose={handleCloseNotification} 
+        <Alert
+          onClose={handleCloseNotification}
           severity={notification.severity}
           variant="filled"
         >
@@ -920,4 +1148,4 @@ const SystemSettings: React.FC = () => {
   );
 };
 
-export default SystemSettings; 
+export default SystemSettings;
